@@ -31,7 +31,6 @@
     border: 1px solid #fff;
     transition: all 0.5s ease;
 }
-
 </style>
 </head>
 <body>
@@ -81,10 +80,11 @@
 <button onclick="askModel()">Ask</button>
 <div id="chatAnswer"></div>
 
-
-
 <script>
 const API = "http://localhost:8000";
+
+// Храним последнее состояние для сравнения
+let lastModelsState = null;
 
 // -------------------------
 // Fetch Models
@@ -102,6 +102,29 @@ async function fetchModels() {
                         <td>${m.total_bets}</td>`;
         tbody.appendChild(tr);
     });
+    
+    // Обновляем bubble map при обновлении моделей
+    updateBubbleMapFromModels(models);
+}
+
+// -------------------------
+// Update Bubble Map from Models
+// -------------------------
+function updateBubbleMapFromModels(models) {
+    const items = models.map(m => ({
+        model: m.name,
+        balance: m.balance,
+        delta: m.balance - 10000
+    }));
+    
+    // Проверяем, изменились ли данные
+    const currentState = JSON.stringify(items.map(i => ({n: i.model, b: i.balance})));
+    if (lastModelsState === currentState) {
+        return; // Данные не изменились, не перерисовываем
+    }
+    
+    lastModelsState = currentState;
+    renderTreemap(items);
 }
 
 // -------------------------
@@ -159,11 +182,9 @@ const ws = new WebSocket("ws://localhost:8000/ws/bubble-map");
 ws.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
     if(data.type === "bubble_map") {
-        // передаём данные в renderTreemap
         renderTreemap(data.data);
     }
 }
-
 
 // -------------------------
 // Model Chat
@@ -186,24 +207,20 @@ function renderTreemap(items){
     const W = container.clientWidth;
     const H = container.clientHeight;
 
-    const total = items.reduce((sum,i)=>sum+i.balance,0);
-    let x = 0, y = 0, rowHeight = 0;
-    let row = [];
+    // Перемешиваем для хаотичности
+    items = items.sort(()=>Math.random()-0.5);
 
-    // сортируем по балансу для лучшего визуального эффекта
-    items.sort((a,b)=>b.balance - a.balance);
+    function layout(x, y, w, h, data){
+        if(data.length === 0) return;
 
-    function layoutRow(row, x, y, W, H){
-        const rowTotal = row.reduce((sum,i)=>sum+i.balance,0);
-        let dx = x;
-        row.forEach(item=>{
-            const w = W * (item.balance / rowTotal);
+        if(data.length === 1){
+            const item = data[0];
             const div = document.createElement("div");
             div.style.position = "absolute";
-            div.style.left = `${dx}px`;
+            div.style.left = `${x}px`;
             div.style.top = `${y}px`;
             div.style.width = `${w}px`;
-            div.style.height = `${H}px`;
+            div.style.height = `${h}px`;
             div.style.background = item.balance < 10000 ? "red" : "green";
             div.style.color = "#fff";
             div.style.display = "flex";
@@ -211,18 +228,44 @@ function renderTreemap(items){
             div.style.alignItems = "center";
             div.style.fontWeight = "bold";
             div.style.textAlign = "center";
+            div.style.fontSize = "12px";
             div.innerText = `${item.model}\n$${item.balance.toFixed(0)}`;
             container.appendChild(div);
-            dx += w;
-        });
+            return;
+        }
+
+        // случайное направление деления
+        const horizontal = Math.random() > 0.5;
+
+        // случайное разделение массива: от 30% до 70%, но не оставляем последним 1 элемент
+        let minSplit = Math.max(1, Math.floor(0.3 * data.length));
+        let maxSplit = Math.min(data.length - 1, Math.floor(0.7 * data.length));
+        if(maxSplit <= minSplit) maxSplit = minSplit + 1;
+        const splitIndex = Math.floor(minSplit + Math.random() * (maxSplit - minSplit));
+
+        const first = data.slice(0, splitIndex);
+        const rest = data.slice(splitIndex);
+
+        // баланс первой и второй группы
+        const firstTotal = first.reduce((sum,i)=>sum+i.balance,0);
+        const restTotal = rest.reduce((sum,i)=>sum+i.balance,0);
+        const total = firstTotal + restTotal;
+
+        if(horizontal){
+            const w1 = w * (firstTotal/total) * (0.8 + Math.random()*0.4);
+            const w2 = w - w1;
+            layout(x, y, w1, h, first);
+            layout(x + w1, y, w2, h, rest);
+        } else {
+            const h1 = h * (firstTotal/total) * (0.8 + Math.random()*0.4);
+            const h2 = h - h1;
+            layout(x, y, w, h1, first);
+            layout(x, y + h1, w, h2, rest);
+        }
     }
 
-    // делим на один ряд (можно доработать на несколько рядов)
-    layoutRow(items, x, y, W, H);
+    layout(0, 0, W, H, items);
 }
-
-
-
 
 async function refreshAll() {
     await fetchModels();
@@ -230,7 +273,7 @@ async function refreshAll() {
     await fetchEventHistory();
     await fetchLeaderboard();
 }
-setInterval(refreshAll, 5000);  // каждые 5 секунд
+setInterval(refreshAll, 5000);
 refreshAll();
 
 </script>

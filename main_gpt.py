@@ -323,22 +323,23 @@ async def set_event_result(event_id: int, data: EventResultSchema):
     return {"status": "ok"}
 
 # -------------------------
-# WebSocket
-# -------------------------
 @app.websocket("/ws/bubble-map")
 async def websocket_bubble_map(ws: WebSocket):
     await manager.connect(ws)
     try:
-        while True:
-            db = SessionLocal()
-            models = db.query(Model).all()
-            items = [{"model": m.name, "balance": m.balance, "delta": m.balance} for m in models]
+        # Отправляем сразу текущие балансы
+        db = SessionLocal()
+        models = db.query(Model).all()
+        items = [{"model": m.name, "balance": m.balance, "delta": m.balance} for m in models]
+        await ws.send_json({"type":"bubble_map", "data": items})
+        db.close()
 
-            await ws.send_json({"type":"bubble_map", "data": items})
-            db.close()
-            await asyncio.sleep(5)
+        # Ждём broadcast, ничего не делаем в цикле
+        while True:
+            await asyncio.sleep(10**6)  # просто держим соединение открытым
     except WebSocketDisconnect:
         manager.disconnect(ws)
+
 
 
 # -------------------------
