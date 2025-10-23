@@ -330,9 +330,16 @@ async def websocket_bubble_map(ws: WebSocket):
     await manager.connect(ws)
     try:
         while True:
-            await asyncio.sleep(1)
+            db = SessionLocal()
+            models = db.query(Model).all()
+            items = [{"model": m.name, "balance": m.balance, "delta": m.balance} for m in models]
+
+            await ws.send_json({"type":"bubble_map", "data": items})
+            db.close()
+            await asyncio.sleep(5)
     except WebSocketDisconnect:
         manager.disconnect(ws)
+
 
 # -------------------------
 # Scheduler

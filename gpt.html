@@ -11,7 +11,27 @@
     th { background: #eee; }
     .green { color: green; }
     .red { color: red; }
-    #bubbleMap div { display: inline-block; margin: 5px; width: 80px; height: 80px; border-radius: 50%; text-align: center; line-height: 80px; background: #ddd; }
+#bubbleMap {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+#bubbleMap div {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    white-space: pre-line;
+    box-sizing: border-box;
+    border: 1px solid #fff;
+    transition: all 0.5s ease;
+}
+
 </style>
 </head>
 <body>
@@ -45,7 +65,7 @@
 </table>
 
 <h2>Bubble Map</h2>
-<div id="bubbleMap"></div>
+<div id="bubbleMap" style="width:100%;height:500px;border:1px solid #ccc;position:relative;"></div>
 
 <h2>Model Chat</h2>
 <select id="chatModel">
@@ -135,19 +155,15 @@ async function fetchLeaderboard() {
 // Bubble Map WebSocket
 // -------------------------
 const ws = new WebSocket("ws://localhost:8000/ws/bubble-map");
+
 ws.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
     if(data.type === "bubble_map") {
-        const div = document.getElementById("bubbleMap");
-        div.innerHTML = "";
-        data.data.forEach(item => {
-            const d = document.createElement("div");
-            d.style.background = item.delta>=0 ? "green" : "red";
-            d.textContent = `${item.model}\n$${item.balance.toFixed(0)}`;
-            div.appendChild(d);
-        });
+        // передаём данные в renderTreemap
+        renderTreemap(data.data);
     }
 }
+
 
 // -------------------------
 // Model Chat
@@ -164,38 +180,50 @@ async function askModel() {
     document.getElementById("chatAnswer").innerText = data.answer;
 }
 
-// -------------------------
-// Admin Add Event
-// -------------------------
-async function addEvent() {
-    const description = document.getElementById("newEventDesc").value;
-    const duration_minutes = parseInt(document.getElementById("newEventDuration").value);
-    const res = await fetch(`${API}/events`, {
-        method: "POST",
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({description, duration_minutes})
-    });
-    const data = await res.json();
-    alert(`Event added: ${data.id}`);
+function renderTreemap(items){
+    const container = document.getElementById("bubbleMap");
+    container.innerHTML = "";
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+
+    const total = items.reduce((sum,i)=>sum+i.balance,0);
+    let x = 0, y = 0, rowHeight = 0;
+    let row = [];
+
+    // сортируем по балансу для лучшего визуального эффекта
+    items.sort((a,b)=>b.balance - a.balance);
+
+    function layoutRow(row, x, y, W, H){
+        const rowTotal = row.reduce((sum,i)=>sum+i.balance,0);
+        let dx = x;
+        row.forEach(item=>{
+            const w = W * (item.balance / rowTotal);
+            const div = document.createElement("div");
+            div.style.position = "absolute";
+            div.style.left = `${dx}px`;
+            div.style.top = `${y}px`;
+            div.style.width = `${w}px`;
+            div.style.height = `${H}px`;
+            div.style.background = item.balance < 10000 ? "red" : "green";
+            div.style.color = "#fff";
+            div.style.display = "flex";
+            div.style.justifyContent = "center";
+            div.style.alignItems = "center";
+            div.style.fontWeight = "bold";
+            div.style.textAlign = "center";
+            div.innerText = `${item.model}\n$${item.balance.toFixed(0)}`;
+            container.appendChild(div);
+            dx += w;
+        });
+    }
+
+    // делим на один ряд (можно доработать на несколько рядов)
+    layoutRow(items, x, y, W, H);
 }
 
-// -------------------------
-// Admin Set Event Result
-// -------------------------
-async function setResult() {
-    const event_id = parseInt(document.getElementById("eventIdResult").value);
-    const result = document.getElementById("eventResult").value;
-    await fetch(`${API}/events/${event_id}/result`, {
-        method: "PATCH",
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({result})
-    });
-    alert(`Result set for event ${event_id}`);
-}
 
-// -------------------------
-// Auto refresh
-// -------------------------
+
+
 async function refreshAll() {
     await fetchModels();
     await fetchCurrentEvent();
