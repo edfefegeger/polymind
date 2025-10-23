@@ -153,7 +153,7 @@ manager = ConnectionManager()
 # -------------------------
 # Initialize models
 # -------------------------
-MODEL_NAMES = ["GPT-5", "Claude", "Sonnet 4.5", "Gemini 2.5 Pro", "Grok 4", "DeepSeek V3.1", "Qwen3 Max"]
+MODEL_NAMES = ["GPT-5", "Claude", "Gemini 2.5 Pro", "Grok 4", "DeepSeek V3.1", "Qwen3 Max"]
 db = SessionLocal()
 for name in MODEL_NAMES:
     if not db.query(Model).filter_by(name=name).first():
