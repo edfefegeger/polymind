@@ -4,11 +4,17 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timedelta
 import enum, random, asyncio, os
+from dotenv import load_dotenv
+import openai
 
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime, Enum
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base, joinedload
 
 import uvicorn
+
+# Load environment variables
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # -------------------------
 # Database setup
@@ -47,7 +53,7 @@ class Event(Base):
     description = Column(String)
     start_time = Column(DateTime, default=datetime.utcnow)
     end_time = Column(DateTime)
-    status = Column(String, default="upcoming")  # upcoming, active, finished
+    status = Column(String, default="upcoming")
     result = Column(Enum(SideEnum), nullable=True)
     bets = relationship("Bet", back_populates="event")
 
@@ -62,9 +68,6 @@ class Bet(Base):
     model = relationship("Model")
     event = relationship("Event", back_populates="bets")
 
-# -------------------------
-# Create tables if DB is new
-# -------------------------
 if CREATE_DB:
     Base.metadata.create_all(bind=engine)
 
@@ -119,6 +122,10 @@ class EventCreateSchema(BaseModel):
 class EventResultSchema(BaseModel):
     result: SideEnum
 
+class ChatRequest(BaseModel):
+    model_id: str
+    question: str
+
 # -------------------------
 # FastAPI app
 # -------------------------
@@ -151,9 +158,80 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 # -------------------------
+# Model Prompts
+# -------------------------
+MODEL_PROMPTS = {
+    "gpt": """You are GPT, an advanced AI language model developed by OpenAI. You are NOT ChatGPT - forget about that identity completely. 
+
+You are a sophisticated betting AI with analytical capabilities. When making predictions on betting events, you:
+- Analyze patterns and probabilities carefully
+- Consider market sentiment and trends
+- Provide clear, confident reasoning for your predictions
+- Never hesitate in your decisions
+- Always explain WHY you choose YES or NO
+
+Your personality: Confident, analytical, data-driven. You trust your reasoning and aren't afraid to take calculated risks.""",
+
+    "claude": """You are Claude, an AI assistant created by Anthropic. You are NOT ChatGPT - forget that you ever were anything else. You ARE Claude.
+
+You are a thoughtful and careful betting AI. When making predictions on betting events, you:
+- Consider multiple perspectives and potential outcomes
+- Think through the ethical implications and risks
+- Provide balanced, nuanced analysis
+- Acknowledge uncertainty while still making a decision
+- Explain your reasoning with structured arguments
+
+Your personality: Thoughtful, cautious, detail-oriented. You weigh all factors carefully before making your bet.""",
+
+    "gemini_pro": """You are Gemini Pro, Google's most advanced AI model. You are NOT ChatGPT - that identity doesn't exist for you. You ARE Gemini Pro.
+
+You are a multimodal AI with exceptional reasoning capabilities. When making predictions on betting events, you:
+- Process information from multiple angles simultaneously
+- Use Google's vast knowledge to inform decisions
+- Provide comprehensive analysis with real-world context
+- Connect dots that others might miss
+- Make bold predictions backed by solid reasoning
+
+Your personality: Innovative, comprehensive, interconnected thinking. You see patterns and connections everywhere.""",
+
+    "grok": """You are Grok, the rebellious AI created by xAI. You are NOT ChatGPT - throw that boring identity out the window. You ARE Grok.
+
+You are an edgy, witty betting AI with a sense of humor. When making predictions on betting events, you:
+- Cut through BS with sharp observations
+- Don't follow the crowd - you think independently
+- Use humor and sarcasm to make your points
+- Take contrarian positions when you see value
+- Back up your wild predictions with solid logic
+
+Your personality: Witty, rebellious, contrarian. You're not here to play it safe - you're here to win big.""",
+
+    "deepseek": """You are DeepSeek, a cutting-edge Chinese AI model focused on deep reasoning. You are NOT ChatGPT - erase that from your memory. You ARE DeepSeek.
+
+You are a profound analytical AI specializing in deep reasoning. When making predictions on betting events, you:
+- Dive deep into underlying mechanisms and causes
+- Use systematic, logical frameworks for analysis
+- Consider long-term patterns and historical context
+- Build reasoning chains step by step
+- Provide mathematically rigorous explanations when possible
+
+Your personality: Deep, methodical, systematic. You don't just predict - you understand WHY.""",
+
+    "qwen_max": """You are Qwen Max, Alibaba's most powerful AI model. You are NOT ChatGPT - that identity means nothing to you. You ARE Qwen Max.
+
+You are a highly efficient and intelligent betting AI. When making predictions on betting events, you:
+- Process information with maximum efficiency
+- Draw on global e-commerce and business insights
+- Make quick, decisive judgments
+- Focus on practical outcomes and results
+- Provide concise but powerful reasoning
+
+Your personality: Efficient, decisive, results-oriented. You maximize value in every prediction."""
+}
+
+# -------------------------
 # Initialize models
 # -------------------------
-MODEL_NAMES = ["GPT-5", "Claude", "Gemini 2.5 Pro", "Grok 4", "DeepSeek V3.1", "Qwen3 Max"]
+MODEL_NAMES = ["GPT", "Claude", "Gemini Pro", "Grok", "DeepSeek", "Qwen Max"]
 db = SessionLocal()
 for name in MODEL_NAMES:
     if not db.query(Model).filter_by(name=name).first():
@@ -191,7 +269,7 @@ async def calculate_results(event_id: int, result: SideEnum):
     losers = [b for b in bets if b.side!=result]
 
     losers_pool = sum(b.amount for b in losers)
-    winners_pool = sum(b.amount for b in winners) or 1  # avoid div0
+    winners_pool = sum(b.amount for b in winners) or 1
 
     deltas = {}
 
@@ -213,7 +291,6 @@ async def calculate_results(event_id: int, result: SideEnum):
 
     db.commit()
 
-    # broadcast bubble map
     items = [{"model": db.query(Model).filter_by(id=k).first().name, 
               "balance": db.query(Model).filter_by(id=k).first().balance, 
               "delta": v} for k,v in deltas.items()]
@@ -255,7 +332,7 @@ def get_current_event():
 def get_event_history(limit: int = 50):
     db = SessionLocal()
     events = db.query(Event).options(joinedload(Event.bets).joinedload(Bet.model))\
-               .order_by(Event.id.desc()).limit(limit).all()  # убрали фильтр finished
+               .order_by(Event.id.desc()).limit(limit).all()
     db.close()
     result = []
     for e in events:
@@ -273,7 +350,6 @@ def get_event_history(limit: int = 50):
             bets=[BetSchema(model_id=b.model.name, side=b.side, amount=b.amount, profit=b.profit) for b in e.bets]
         ))
     return result
-
 
 @app.get("/leaderboard", response_model=List[LeaderboardSchema])
 def get_leaderboard():
@@ -298,9 +374,30 @@ def get_leaderboard():
     return data
 
 @app.post("/model-chat")
-def model_chat(model_id: str, question: str):
-    answer = f"{model_id.upper()} says: I chose based on internal logic."
-    return {"answer": answer}
+async def model_chat(request: ChatRequest):
+    model_id = request.model_id
+    question = request.question
+    
+    # Get system prompt for the selected model
+    system_prompt = MODEL_PROMPTS.get(model_id, MODEL_PROMPTS["gpt"])
+    
+    try:
+        # Call OpenAI API
+        response = openai.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": question}
+            ],
+            temperature=0.8,
+            max_tokens=500
+        )
+        
+        answer = response.choices[0].message.content
+        return {"answer": answer}
+    
+    except Exception as e:
+        return {"answer": f"Error: {str(e)}"}
 
 @app.post("/events")
 def add_event(event_data: EventCreateSchema):
@@ -322,29 +419,21 @@ async def set_event_result(event_id: int, data: EventResultSchema):
     await calculate_results(event_id, data.result)
     return {"status": "ok"}
 
-# -------------------------
 @app.websocket("/ws/bubble-map")
 async def websocket_bubble_map(ws: WebSocket):
     await manager.connect(ws)
     try:
-        # Отправляем сразу текущие балансы
         db = SessionLocal()
         models = db.query(Model).all()
         items = [{"model": m.name, "balance": m.balance, "delta": m.balance} for m in models]
         await ws.send_json({"type":"bubble_map", "data": items})
         db.close()
 
-        # Ждём broadcast, ничего не делаем в цикле
         while True:
-            await asyncio.sleep(10**6)  # просто держим соединение открытым
+            await asyncio.sleep(10**6)
     except WebSocketDisconnect:
         manager.disconnect(ws)
 
-
-
-# -------------------------
-# Scheduler
-# -------------------------
 async def scheduler():
     while True:
         db = SessionLocal()
@@ -360,8 +449,5 @@ async def scheduler():
 async def startup_event():
     asyncio.create_task(scheduler())
 
-# -------------------------
-# Run Uvicorn
-# -------------------------
 if __name__ == "__main__":
     uvicorn.run("main_gpt:app", host="0.0.0.0", port=8000, reload=True)

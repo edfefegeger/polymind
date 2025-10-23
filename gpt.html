@@ -66,19 +66,38 @@
 <h2>Bubble Map</h2>
 <div id="bubbleMap" style="width:100%;height:500px;border:1px solid #ccc;position:relative;"></div>
 
-<h2>Model Chat</h2>
-<select id="chatModel">
-    <option value="gpt_5">GPT-5</option>
-    <option value="claude">Claude</option>
-    <option value="sonnet_4_5">Sonnet 4.5</option>
-    <option value="gemini_2_5_pro">Gemini 2.5 Pro</option>
-    <option value="grok_4">Grok 4</option>
-    <option value="deepseek_v3_1">DeepSeek V3.1</option>
-    <option value="qwen3_max">Qwen3 Max</option>
-</select>
-<input type="text" id="chatQuestion" placeholder="Your question">
-<button onclick="askModel()">Ask</button>
-<div id="chatAnswer"></div>
+<h2>💬 AI Model Chat</h2>
+<div style="max-width: 800px; background: #f9f9f9; padding: 20px; border-radius: 12px; border: 2px solid #ddd;">
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 8px;">Select AI Model:</label>
+        <select id="chatModel" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+            <option value="gpt">🤖 GPT</option>
+            <option value="claude">🧠 Claude</option>
+            <option value="gemini_pro">✨ Gemini Pro</option>
+            <option value="grok">😎 Grok</option>
+            <option value="deepseek">🔍 DeepSeek</option>
+            <option value="qwen_max">⚡ Qwen Max</option>
+        </select>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 8px;">Your Question:</label>
+        <textarea id="chatQuestion" placeholder="Ask about betting strategy, predictions, or analysis..." 
+                  style="width: 100%; min-height: 80px; padding: 10px; border-radius: 8px; border: 2px solid #ccc; font-family: Arial; font-size: 14px; resize: vertical;"></textarea>
+    </div>
+    
+    <button onclick="askModel()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s;">
+        Send Message
+    </button>
+    
+    <div id="chatAnswer" style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border: 2px solid #e0e0e0; min-height: 100px; max-height: 400px; overflow-y: auto; font-size: 14px; line-height: 1.6; white-space: pre-wrap; display: none;">
+    </div>
+    
+    <div id="chatLoading" style="margin-top: 20px; padding: 15px; text-align: center; display: none;">
+        <span style="font-size: 24px;">⏳</span>
+        <p style="margin: 5px 0 0 0; color: #667eea;">AI is thinking...</p>
+    </div>
+</div>
 
 <script>
 const API = "http://localhost:8000";
@@ -191,14 +210,37 @@ ws.onmessage = (msg) => {
 // -------------------------
 async function askModel() {
     const model_id = document.getElementById("chatModel").value;
-    const question = document.getElementById("chatQuestion").value;
-    const res = await fetch(`${API}/model-chat`, {
-        method: "POST",
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({model_id, question})
-    });
-    const data = await res.json();
-    document.getElementById("chatAnswer").innerText = data.answer;
+    const question = document.getElementById("chatQuestion").value.trim();
+    
+    if (!question) {
+        alert("Please enter a question!");
+        return;
+    }
+    
+    // Show loading, hide answer
+    document.getElementById("chatLoading").style.display = "block";
+    document.getElementById("chatAnswer").style.display = "none";
+    
+    try {
+        const res = await fetch(`${API}/model-chat`, {
+            method: "POST",
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({model_id, question})
+        });
+        
+        const data = await res.json();
+        
+        // Hide loading, show answer
+        document.getElementById("chatLoading").style.display = "none";
+        const answerDiv = document.getElementById("chatAnswer");
+        answerDiv.style.display = "block";
+        answerDiv.innerText = data.answer;
+        
+    } catch (error) {
+        document.getElementById("chatLoading").style.display = "none";
+        document.getElementById("chatAnswer").style.display = "block";
+        document.getElementById("chatAnswer").innerText = "Error: " + error.message;
+    }
 }
 
 function renderTreemap(items){
