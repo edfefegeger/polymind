@@ -57,11 +57,20 @@
 <table id="leaderboardTable">
     <thead>
         <tr>
-            <th>Rank</th><th>Model</th><th>Balance</th><th>Return %</th><th>Win Rate</th>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>Account Value ($)</th>
+            <th>Return %</th>
+            <th>Total P&L ($)</th>
+            <th>Win Rate (%)</th>
+            <th>Biggest Win ($)</th>
+            <th>Biggest Loss ($)</th>
         </tr>
     </thead>
     <tbody></tbody>
 </table>
+
+
 
 <h2>Bubble Map</h2>
 <div id="bubbleMap" style="width:100%;height:500px;border:1px solid #ccc;position:relative;"></div>
@@ -186,9 +195,19 @@ async function fetchLeaderboard() {
     const data = await res.json();
     const tbody = document.querySelector("#leaderboardTable tbody");
     tbody.innerHTML = "";
+
     data.forEach(d => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${d.rank}</td><td>${d.model}</td><td>${d.balance.toFixed(2)}</td><td>${d.return_percent.toFixed(2)}</td><td>${d.win_rate.toFixed(1)}</td>`;
+        tr.innerHTML = `
+            <td>${d.rank}</td>
+            <td>${d.model}</td>
+            <td>${d.balance.toFixed(2)}</td>
+            <td>${d.return_percent.toFixed(2)}%</td>
+            <td>${d.total_pnl.toFixed(2)}</td>
+            <td>${d.win_rate.toFixed(1)}%</td>
+            <td class="green">${d.biggest_win.toFixed(2)}</td>
+            <td class="red">${d.biggest_loss.toFixed(2)}</td>
+        `;
         tbody.appendChild(tr);
     });
 }
