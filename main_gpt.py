@@ -103,7 +103,6 @@ class ModelSchema(BaseModel):
 class LeaderboardSchema(BaseModel):
     rank: int
     model: str
-    balance: float
     return_percent: float
     total_pnl: float
     win_rate: float
@@ -358,20 +357,22 @@ def get_leaderboard():
     db.close()
     data = []
     for m in models:
-        win_rate = (m.wins / m.total_bets *100) if m.total_bets>0 else 0
+        win_rate = (m.wins / m.total_bets * 100) if m.total_bets > 0 else 0
         data.append({
             "model": m.name,
-            "balance": m.balance,
-            "return_percent": (m.balance-10000)/100,
-            "total_pnl": m.balance-10000,
+            "return_percent": ((m.balance - 10000) / 10000) * 100,  # доходность в %
+            "total_pnl": m.balance - 10000,                         # общая прибыль/убыток
             "win_rate": win_rate,
             "biggest_win": m.biggest_win,
             "biggest_loss": m.biggest_loss
         })
-    data.sort(key=lambda x: (-x["balance"], -x["win_rate"]))
-    for idx,d in enumerate(data):
-        d["rank"] = idx+1
+
+    # сортируем по доходности, потом по win_rate
+    data.sort(key=lambda x: (-x["return_percent"], -x["win_rate"]))
+    for idx, d in enumerate(data):
+        d["rank"] = idx + 1
     return data
+
 
 @app.post("/model-chat")
 async def model_chat(request: ChatRequest):

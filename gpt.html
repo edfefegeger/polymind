@@ -59,7 +59,6 @@
         <tr>
             <th>Rank</th>
             <th>Model</th>
-            <th>Account Value ($)</th>
             <th>Return %</th>
             <th>Total P&L ($)</th>
             <th>Win Rate (%)</th>
@@ -201,7 +200,6 @@ async function fetchLeaderboard() {
         tr.innerHTML = `
             <td>${d.rank}</td>
             <td>${d.model}</td>
-            <td>${d.balance.toFixed(2)}</td>
             <td>${d.return_percent.toFixed(2)}%</td>
             <td>${d.total_pnl.toFixed(2)}</td>
             <td>${d.win_rate.toFixed(1)}%</td>
