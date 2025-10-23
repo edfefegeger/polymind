@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Polymind Arena</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { margin-top: 30px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #eee; }
+    .green { color: green; }
+    .red { color: red; }
+    #bubbleMap div { display: inline-block; margin: 5px; width: 80px; height: 80px; border-radius: 50%; text-align: center; line-height: 80px; background: #ddd; }
+</style>
+</head>
+<body>
+
+<h1>Polymind Arena</h1>
+
+<h2>Модели и балансы</h2>
+<table id="modelsTable">
+    <thead>
+        <tr>
+            <th>Model</th><th>Balance</th><th>Wins</th><th>Total Bets</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<h2>Текущее событие</h2>
+<div id="currentEvent"></div>
+
+<h2>История событий</h2>
+<div id="eventHistory"></div>
+
+<h2>Лидерборд</h2>
+<table id="leaderboardTable">
+    <thead>
+        <tr>
+            <th>Rank</th><th>Model</th><th>Balance</th><th>Return %</th><th>Win Rate</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<h2>Bubble Map</h2>
+<div id="bubbleMap"></div>
+
+<h2>Model Chat</h2>
+<select id="chatModel">
+    <option value="gpt_5">GPT-5</option>
+    <option value="claude">Claude</option>
+    <option value="sonnet_4_5">Sonnet 4.5</option>
+    <option value="gemini_2_5_pro">Gemini 2.5 Pro</option>
+    <option value="grok_4">Grok 4</option>
+    <option value="deepseek_v3_1">DeepSeek V3.1</option>
+    <option value="qwen3_max">Qwen3 Max</option>
+</select>
+<input type="text" id="chatQuestion" placeholder="Your question">
+<button onclick="askModel()">Ask</button>
+<div id="chatAnswer"></div>
+
+
+
+<script>
+const API = "http://localhost:8000";
+
+// -------------------------
+// Fetch Models
+// -------------------------
+async function fetchModels() {
+    const res = await fetch(`${API}/models`);
+    const models = await res.json();
+    const tbody = document.querySelector("#modelsTable tbody");
+    tbody.innerHTML = "";
+    models.forEach(m => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${m.name}</td>
+                        <td>${m.balance.toFixed(2)}</td>
+                        <td>${m.wins}</td>
+                        <td>${m.total_bets}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+// -------------------------
+// Fetch Current Event
+// -------------------------
+async function fetchCurrentEvent() {
+    const res = await fetch(`${API}/events/current`);
+    const event = await res.json();
+    const div = document.getElementById("currentEvent");
+    if(event){
+        let html = `<b>ID:</b> ${event.id} <br><b>${event.description}</b><br>`;
+        html += "<table><tr><th>Model</th><th>Side</th><th>Amount</th></tr>";
+        event.bets.forEach(b => {
+            html += `<tr><td>${b.model_id}</td><td>${b.side}</td><td>${b.amount}</td></tr>`;
+        });
+        html += "</table>";
+        div.innerHTML = html;
+    } else div.innerHTML = "No active event";
+}
+
+// -------------------------
+// Fetch Event History
+// -------------------------
+async function fetchEventHistory() {
+    const res = await fetch(`${API}/events/history`);
+    const events = await res.json();
+    const div = document.getElementById("eventHistory");
+    let html = "";
+    events.forEach(e => {
+        html += `<b>${e.id}: ${e.description} [${e.result}]</b><br>`;
+    });
+    div.innerHTML = html;
+}
+
+// -------------------------
+// Fetch Leaderboard
+// -------------------------
+async function fetchLeaderboard() {
+    const res = await fetch(`${API}/leaderboard`);
+    const data = await res.json();
+    const tbody = document.querySelector("#leaderboardTable tbody");
+    tbody.innerHTML = "";
+    data.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${d.rank}</td><td>${d.model}</td><td>${d.balance.toFixed(2)}</td><td>${d.return_percent.toFixed(2)}</td><td>${d.win_rate.toFixed(1)}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+// -------------------------
+// Bubble Map WebSocket
+// -------------------------
+const ws = new WebSocket("ws://localhost:8000/ws/bubble-map");
+ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if(data.type === "bubble_map") {
+        const div = document.getElementById("bubbleMap");
+        div.innerHTML = "";
+        data.data.forEach(item => {
+            const d = document.createElement("div");
+            d.style.background = item.delta>=0 ? "green" : "red";
+            d.textContent = `${item.model}\n$${item.balance.toFixed(0)}`;
+            div.appendChild(d);
+        });
+    }
+}
+
+// -------------------------
+// Model Chat
+// -------------------------
+async function askModel() {
+    const model_id = document.getElementById("chatModel").value;
+    const question = document.getElementById("chatQuestion").value;
+    const res = await fetch(`${API}/model-chat`, {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model_id, question})
+    });
+    const data = await res.json();
+    document.getElementById("chatAnswer").innerText = data.answer;
+}
+
+// -------------------------
+// Admin Add Event
+// -------------------------
+async function addEvent() {
+    const description = document.getElementById("newEventDesc").value;
+    const duration_minutes = parseInt(document.getElementById("newEventDuration").value);
+    const res = await fetch(`${API}/events`, {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({description, duration_minutes})
+    });
+    const data = await res.json();
+    alert(`Event added: ${data.id}`);
+}
+
+// -------------------------
+// Admin Set Event Result
+// -------------------------
+async function setResult() {
+    const event_id = parseInt(document.getElementById("eventIdResult").value);
+    const result = document.getElementById("eventResult").value;
+    await fetch(`${API}/events/${event_id}/result`, {
+        method: "PATCH",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({result})
+    });
+    alert(`Result set for event ${event_id}`);
+}
+
+// -------------------------
+// Auto refresh
+// -------------------------
+async function refreshAll() {
+    await fetchModels();
+    await fetchCurrentEvent();
+    await fetchEventHistory();
+    await fetchLeaderboard();
+}
+setInterval(refreshAll, 5000);  // каждые 5 секунд
+refreshAll();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Events Admin — Manage Betting Events</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#e6eef8;padding:20px}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}
+  h2{color:#64ffda;margin:0}
+  .back-btn{padding:10px 20px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block}
+  .back-btn:hover{background:#7a8cff}
+  .card{background:#0f1a2b;padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.08)}
+  label{display:block;margin-top:12px;font-size:13px;color:#9fb0d6;font-weight:600}
+  input,select,textarea{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:#071025;color:#e6eef8;width:100%;font-family:inherit;margin-top:6px}
+  textarea{resize:vertical;min-height:60px}
+  button{margin-top:12px;padding:12px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#43e97b 0%,#38f9d7 100%);color:white;cursor:pointer;font-weight:600;transition:all 0.3s}
+  button:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(67,233,123,0.4)}
+  button.danger{background:linear-gradient(135deg,#ff6b6b 0%,#ee5a6f 100%)}
+  button.warning{background:linear-gradient(135deg,#feca57 0%,#ff9ff3 100%)}
+  table{width:100%;border-collapse:collapse;margin-top:16px}
+  th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:left}
+  th{color:#64ffda;font-weight:600;font-size:13px;text-transform:uppercase}
+  td{color:#dbe9ff;font-size:14px}
+  .status-badge{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;display:inline-block}
+  .status-pending{background:rgba(255,206,84,0.2);color:#ffce54}
+  .status-active{background:rgba(100,255,218,0.2);color:#64ffda}
+  .status-resolved{background:rgba(136,146,176,0.2);color:#8892b0}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .actions button{margin:0;padding:6px 12px;font-size:12px}
+  .small{font-size:12px;color:#93a7cf;margin-top:4px}
+</style>
+</head>
+<body>
+  <div class="header">
+    <h2>⚙️ Events Administration</h2>
+    <a href="index.html" class="back-btn">← Back to Dashboard</a>
+  </div>
+
+  <div class="card">
+    <h3>➕ Create New Event</h3>
+    <label>Event Title *
+      <input id="eventTitle" type="text" placeholder="Will Bitcoin drop by 1% in 10 minutes?" />
+    </label>
+    <label>Description (optional)
+      <textarea id="eventDescription" placeholder="Market prediction event..."></textarea>
+    </label>
+    <label>Duration (minutes)
+      <input id="eventDuration" type="number" value="10" min="1" max="1440" />
+      <div class="small">How long before the event resolves (1-1440 minutes)</div>
+    </label>
+    <button onclick="createNewEvent()">Create Event</button>
+
+  </div>
+
+  <div class="card">
+    <h3>📋 All Events</h3>
+    <button onclick="loadEvents()">🔄 Refresh List</button>
+    <table id="eventsTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Duration</th>
+          <th>Status</th>
+          <th>Pools</th>
+          <th>Winner</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center">
+    <div class="card" style="width:500px;max-width:90%">
+      <h3>✏️ Edit Event</h3>
+      <input type="hidden" id="editEventId" />
+      <label>Title
+        <input id="editTitle" type="text" />
+      </label>
+      <label>Description
+        <textarea id="editDescription"></textarea>
+      </label>
+      <label>Duration (minutes)
+        <input id="editDuration" type="number" min="1" max="1440" />
+      </label>
+      <label>Status
+        <select id="editStatus">
+          <option value="pending">Pending</option>
+          <option value="active">Active</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </label>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button onclick="saveEdit()">💾 Save</button>
+        <button class="danger" onclick="closeEditModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = "http://localhost:8000";
+
+// --- Safe JSON Parser ---
+async function safeJson(res) {
+  const text = await res.text();
+  if (!text) return {};
+  try { return JSON.parse(text); }
+  catch(e) {
+    console.error("Bad JSON:", text);
+    throw e;
+  }
+}
+
+// --- Create Event ---
+async function createNewEvent() {
+  const title = document.getElementById("eventTitle").value.trim();
+  const description = document.getElementById("eventDescription").value.trim();
+  const duration = parseInt(document.getElementById("eventDuration").value);
+
+  if (!title) {
+    alert("Title is required");
+    return;
+  }
+
+  const res = await fetch("http://localhost:8000/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title,
+      description,
+      duration_minutes: duration
+    })
+  });
+
+  const data = await res.json();
+  console.log("Event created:", data);
+  alert("Event created successfully!");
+}
+
+// --- Load Events ---
+async function loadEvents(){
+  try{
+    const res = await fetch(`${API}/events`);
+    const events = await safeJson(res);
+    const tbody = document.querySelector('#eventsTable tbody');
+    tbody.innerHTML = '';
+
+    if(!Array.isArray(events) || events.length===0){
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#8892b0">No events found</td></tr>';
+      return;
+    }
+
+    events.forEach(ev => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${ev.id}</td>
+        <td><strong>${ev.title}</strong>${ev.description ? '<br><small style="color:#8892b0">' + ev.description + '</small>' : ''}</td>
+        <td>${ev.duration_minutes} min</td>
+        <td><span class="status-badge status-${ev.status}">${ev.status}</span></td>
+        <td>${ev.status === 'active' ? `YES: $${ev.current_yes_pool.toFixed(0)}<br>NO: $${ev.current_no_pool.toFixed(0)}` : '-'}</td>
+        <td>${ev.winning_side || '-'}</td>
+        <td class="actions">
+          <button onclick="openEditModal(${ev.id}, '${ev.title.replace(/'/g, "\\'")}', '${(ev.description||'').replace(/'/g,"\\'")}', ${ev.duration_minutes}, '${ev.status}')">✏️ Edit</button>
+          ${ev.status === 'pending' ? `<button onclick="startEvent(${ev.id})">▶️ Start</button>` : ''}
+          ${ev.status === 'active' ? `
+            <button class="warning" onclick="resolveEvent(${ev.id}, 'YES')">YES</button>
+            <button class="warning" onclick="resolveEvent(${ev.id}, 'NO')">NO</button>` : ''}
+          <button class="danger" onclick="deleteEvent(${ev.id})">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    console.error(e);
+    alert('Error loading events');
+  }
+}
+
+// --- Start Event ---
+async function startEvent(id){
+  if(!confirm('Start this event?')) return;
+  try{
+    const res = await fetch(`${API}/events/${id}/start`, {method:'POST'});
+    await safeJson(res);
+    await loadEvents();
+    alert('Event started!');
+  }catch(e){
+    console.error(e);
+    alert('Error starting event');
+  }
+}
+
+// --- Resolve Event ---
+async function resolveEvent(id, side){
+  if(!confirm(`Resolve event with ${side} as winner?`)) return;
+  try{
+    const res = await fetch(`${API}/events/${id}/resolve?winning_side=${side}`, {method:'POST'});
+    await safeJson(res);
+    await loadEvents();
+    alert(`Event resolved with ${side}!`);
+  }catch(e){
+    console.error(e);
+    alert('Error resolving event');
+  }
+}
+
+// --- Delete Event ---
+async function deleteEvent(id){
+  if(!confirm('Delete this event?')) return;
+  try{
+    const res = await fetch(`${API}/events/${id}`, {method:'DELETE'});
+    await safeJson(res);
+    await loadEvents();
+  }catch(e){
+    console.error(e);
+    alert('Error deleting event');
+  }
+}
+
+// --- Edit Modal Logic ---
+function openEditModal(id,title,description,duration,status){
+  editModal.style.display='flex';
+  editEventId.value=id;
+  editTitle.value=title;
+  editDescription.value=description;
+  editDuration.value=duration;
+  editStatus.value=status;
+}
+function closeEditModal(){
+  editModal.style.display='none';
+}
+async function saveEdit(){
+  const id=editEventId.value;
+  const title=editTitle.value.trim();
+  const description=editDescription.value.trim();
+  const duration=parseInt(editDuration.value);
+  const status=editStatus.value;
+  try{
+    const res=await fetch(`${API}/events/${id}`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title,description,duration_minutes:duration,status})
+    });
+    await safeJson(res);
+    closeEditModal();
+    await loadEvents();
+    alert('Event updated!');
+  }catch(e){
+    console.error(e);
+    alert('Error updating event');
+  }
+}
+
+// --- Init ---
+loadEvents();
+</script>
+</body>
+</html>

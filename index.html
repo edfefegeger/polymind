@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Betting Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8892b0;
+            margin-bottom: 30px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #e6f1ff;
+            font-weight: 600;
+        }
+
+        canvas {
+            max-height: 400px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .stat-name {
+            font-size: 0.9em;
+            color: #8892b0;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #64ffda;
+        }
+
+        .stat-subvalue {
+            font-size: 0.85em;
+            color: #8892b0;
+            margin-top: 5px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status.connected {
+            background: rgba(100, 255, 218, 0.1);
+            color: #64ffda;
+        }
+
+        .status.disconnected {
+            background: rgba(255, 100, 100, 0.1);
+            color: #ff6464;
+        }
+
+        /* Chat Styles */
+        .chat-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            height: 800px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-header {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #e6f1ff;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .chat-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-message.system {
+            background: rgba(100, 255, 218, 0.1);
+            border-left: 3px solid #64ffda;
+        }
+
+        .chat-message.bet {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 3px solid #667eea;
+        }
+
+        .chat-message.reasoning {
+            background: rgba(118, 75, 162, 0.1);
+            border-left: 3px solid #764ba2;
+            font-style: italic;
+        }
+
+        .chat-message.result {
+            background: rgba(240, 147, 251, 0.1);
+            border-left: 3px solid #f093fb;
+            font-weight: 600;
+        }
+
+        .chat-timestamp {
+            font-size: 0.75em;
+            color: #8892b0;
+            margin-bottom: 4px;
+        }
+
+        .chat-text {
+            color: #e6f1ff;
+            line-height: 1.5;
+        }
+
+        /* Events Styles */
+        .events-section {
+            margin-bottom: 30px;
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .event-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .event-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #e6f1ff;
+            margin-bottom: 8px;
+        }
+
+        .event-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .event-status.pending {
+            background: rgba(255, 206, 84, 0.2);
+            color: #ffce54;
+        }
+
+        .event-status.active {
+            background: rgba(100, 255, 218, 0.2);
+            color: #64ffda;
+        }
+
+        .event-status.resolved {
+            background: rgba(136, 146, 176, 0.2);
+            color: #8892b0;
+        }
+
+        .event-description {
+            color: #8892b0;
+            font-size: 0.9em;
+            margin-bottom: 12px;
+        }
+
+        .event-pools {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .pool {
+            flex: 1;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .pool-label {
+            font-size: 0.75em;
+            color: #8892b0;
+            margin-bottom: 4px;
+        }
+
+        .pool-value {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #64ffda;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .event-actions button {
+            flex: 1;
+            padding: 8px 16px;
+            font-size: 0.85em;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .btn-resolve {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 onclick="handleTitleClick()">🎲 AI Betting Dashboard</h1>
+        <p class="subtitle">Real-time AI agents betting on market events</p>
+
+        <div id="status" class="status disconnected">Connecting...</div>
+
+        <div class="controls">
+            <button onclick="loadEvents()">🔄 Refresh Events</button>
+            <button onclick="window.location.href='events-admin.html'">⚙️ Manage Events</button>
+            <button class="secondary" onclick="resetDatabase()">🗑️ Reset All</button>
+        </div>
+
+        <div class="main-grid">
+            <div class="left-column">
+                <div class="events-section">
+                    <div class="chart-container">
+                        <div class="chart-title">📋 Active Events</div>
+                        <div id="eventsGrid" class="events-grid"></div>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="statsGrid"></div>
+
+                <div class="chart-container">
+                    <div class="chart-title">📈 Winrate % (Win Percentage)</div>
+                    <canvas id="winrateChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">💰 Balance $ (Balance)</div>
+                    <canvas id="balanceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="right-column">
+                <div class="chat-container">
+                    <div class="chat-header">
+                        💬 Live Activity Feed
+                    </div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        const WS_URL = 'ws://localhost:8000/ws';
+        
+        let ws;
+        let winrateChart, balanceChart;
+        let chatPollInterval;
+        
+        const agentColors = [
+            '#667eea',
+            '#764ba2', 
+            '#f093fb',
+            '#4facfe',
+            '#43e97b',
+            '#fa709a'
+        ];
+
+        const agentNames = [
+            'GPT-4',
+            'Claude',
+            'Grok',
+            'DeepSeek',
+            'Gemini',
+            'Qwen'
+        ];
+
+        let clickCount = 0;
+        function handleTitleClick() {
+            clickCount++;
+            if (clickCount >= 3) {
+                window.location.href = 'admin.html';
+            }
+            setTimeout(() => clickCount = 0, 1000);
+        }
+
+        function initCharts() {
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#8892b0',
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#e6f1ff',
+                        bodyColor: '#8892b0',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'category',
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { 
+                            color: '#8892b0',
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#8892b0' }
+                    }
+                }
+            };
+
+            winrateChart = new Chart(document.getElementById('winrateChart'), {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                ...commonOptions.scales.y.ticks,
+                                callback: value => value + '%'
+                            }
+                        }
+                    }
+                }
+            });
+
+            balanceChart = new Chart(document.getElementById('balanceChart'), {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            ticks: {
+                                ...commonOptions.scales.y.ticks,
+                                callback: value => '$' + value
+
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts(history) {
+            if (!history || Object.keys(history).length === 0) return;
+
+            const allTimestamps = new Set();
+            Object.values(history).forEach(agentHistory => {
+                agentHistory.forEach(point => allTimestamps.add(point.timestamp));
+            });
+            const labels = Array.from(allTimestamps).sort().map((ts, i) => `#${i + 1}`);
+
+            const winrateDatasets = [];
+            const balanceDatasets = [];
+
+            for (let i = 1; i <= 6; i++) {
+                const agentHistory = history[i.toString()] || [];
+                
+                winrateDatasets.push({
+                    label: agentNames[i - 1],
+                    data: agentHistory.map(p => p.winrate),
+                    borderColor: agentColors[i - 1],
+                    backgroundColor: agentColors[i - 1] + '20',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6
+                });
+
+                balanceDatasets.push({
+                    label: agentNames[i - 1],
+                    data: agentHistory.map(p => p.balance),
+                    borderColor: agentColors[i - 1],
+                    backgroundColor: agentColors[i - 1] + '20',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6
+                });
+            }
+
+            winrateChart.data.labels = labels;
+            winrateChart.data.datasets = winrateDatasets;
+            winrateChart.update('none');
+
+            balanceChart.data.labels = labels;
+            balanceChart.data.datasets = balanceDatasets;
+            balanceChart.update('none');
+        }
+
+        async function updateStats() {
+            try {
+                const response = await fetch(`${API_URL}/agents`);
+                const agents = await response.json();
+                
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = agents.map(agent => `
+                    <div class="stat-card">
+                        <div class="stat-name">${agent.name}</div>
+                        <div class="stat-value">${agent.balance.toFixed(2)}</div>
+                        <div class="stat-subvalue">
+                            ${agent.winrate.toFixed(1)}% WR | ${agent.total_bets} bets
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        async function loadEvents() {
+            try {
+                const response = await fetch(`${API_URL}/events`);
+                const events = await response.json();
+                
+                const eventsGrid = document.getElementById('eventsGrid');
+                
+                if (events.length === 0) {
+                    eventsGrid.innerHTML = '<p style="color: #8892b0; text-align: center;">No events yet. Create one in Events Admin!</p>';
+                    return;
+                }
+                
+                eventsGrid.innerHTML = events.map(event => `
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div>
+                                <div class="event-title">${event.title}</div>
+                                ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
+                            </div>
+                            <div class="event-status ${event.status}">${event.status}</div>
+                        </div>
+                        
+                        ${event.status === 'active' ? `
+                            <div class="event-pools">
+                                <div class="pool">
+                                    <div class="pool-label">YES Pool</div>
+                                    <div class="pool-value">${event.current_yes_pool.toFixed(0)}</div>
+                                </div>
+                                <div class="pool">
+                                    <div class="pool-label">NO Pool</div>
+                                    <div class="pool-value">${event.current_no_pool.toFixed(0)}</div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="event-actions">
+                            ${event.status === 'pending' ? `
+                                <button class="btn-start" onclick="startEvent(${event.id})">🚀 Start Event</button>
+                            ` : ''}
+                            ${event.status === 'active' ? `
+                                <button class="btn-resolve" onclick="resolveEvent(${event.id}, 'YES')">✅ YES Wins</button>
+                                <button class="btn-resolve" onclick="resolveEvent(${event.id}, 'NO')">❌ NO Wins</button>
+                            ` : ''}
+                            ${event.status === 'resolved' ? `
+                                <span style="color: #64ffda;">🏁 ${event.winning_side} won</span>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading events:', error);
+            }
+        }
+
+        async function startEvent(eventId) {
+            try {
+                const response = await fetch(`${API_URL}/events/${eventId}/start`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                console.log('Event started:', result);
+                await loadEvents();
+                await loadChat();
+            } catch (error) {
+                console.error('Error starting event:', error);
+                alert('Error starting event');
+            }
+        }
+
+        async function resolveEvent(eventId, winningSide) {
+            if (!confirm(`Resolve event with ${winningSide} as winner?`)) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/events/${eventId}/resolve?winning_side=${winningSide}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                console.log('Event resolved:', result);
+                await loadEvents();
+                await loadChat();
+            } catch (error) {
+                console.error('Error resolving event:', error);
+                alert('Error resolving event');
+            }
+        }
+
+        async function loadChat() {
+            try {
+                const response = await fetch(`${API_URL}/chat/messages?limit=100`);
+                const messages = await response.json();
+                
+                const chatMessages = document.getElementById('chatMessages');
+                const shouldScroll = chatMessages.scrollHeight - chatMessages.scrollTop === chatMessages.clientHeight;
+                
+                chatMessages.innerHTML = messages.map(msg => {
+                    const time = new Date(msg.timestamp).toLocaleTimeString();
+                    return `
+                        <div class="chat-message ${msg.type}">
+                            <div class="chat-timestamp">${time}</div>
+                            <div class="chat-text">${msg.message}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                if (shouldScroll || messages.length > 0) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            } catch (error) {
+                console.error('Error loading chat:', error);
+            }
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                document.getElementById('status').textContent = '🟢 Connected';
+                document.getElementById('status').className = 'status connected';
+            };
+
+            ws.onmessage = (event) => {
+                const history = JSON.parse(event.data);
+                updateCharts(history);
+                updateStats();
+                loadChat();
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                document.getElementById('status').textContent = '🔴 Disconnected';
+                document.getElementById('status').className = 'status disconnected';
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        async function resetDatabase() {
+            if (!confirm('Are you sure? This will reset all history and events.')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/reset`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                console.log('Reset complete:', result);
+                
+                if (ws) ws.close();
+                setTimeout(() => {
+                    connectWebSocket();
+                    loadEvents();
+                    loadChat();
+                }, 500);
+            } catch (error) {
+                console.error('Error resetting database:', error);
+                alert('Error resetting database');
+            }
+        }
+
+        // Initialize
+        initCharts();
+        connectWebSocket();
+        updateStats();
+        loadEvents();
+        loadChat();
+        
+        // Poll chat every 2 seconds
+        chatPollInterval = setInterval(loadChat, 2000);
+    </script>
+</body>
+</html>
