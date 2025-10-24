@@ -2132,3 +2132,9 @@ body.ie ._ibg img {
     display: block;
     position: relative;
 }
+#bubbleMap {
+    width: 100%;
+    height: 100%;
+    transform-origin: top left;
+    transition: transform 0.2s ease;
+}

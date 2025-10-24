@@ -683,8 +683,7 @@ async function initApp() {
 async function initLeaderboard() {
     await updateHeaderBalances();
     await updateLeaderboard();
-    
-    // Автообновление каждые 5 секунд
+
     setInterval(async () => {
         await updateHeaderBalances();
         await updateLeaderboard();
@@ -699,9 +698,6 @@ document.addEventListener('DOMContentLoaded', () => {
         initApp();
     }
 });
-
-
-
 
 
 
@@ -793,7 +789,6 @@ function renderTreemap(items) {
         }
     };
 
-    // Создаём один блок
     function createBlock(item, x, y, w, h) {
         const div = document.createElement("div");
         div.style.position = "absolute";
@@ -849,7 +844,6 @@ function renderTreemap(items) {
         container.appendChild(div);
     }
 
-    // Разбиение
     function layout(x, y, w, h, data) {
         if (data.length === 0) return;
 
@@ -885,3 +879,20 @@ function renderTreemap(items) {
 
     layout(0, 0, W, H, items);
 }
+// Кэшируем последние полученные данные
+let lastData = [];
+
+ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if (data.type === "bubble_map") {
+        lastData = data.data;
+        renderTreemap(lastData);
+    }
+};
+
+// Перерисовываем при изменении размера окна
+window.addEventListener("resize", () => {
+    if (lastData.length > 0) {
+        renderTreemap(lastData);
+    }
+});
