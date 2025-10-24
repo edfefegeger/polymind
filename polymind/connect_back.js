@@ -115,39 +115,39 @@ function initTextAnimation(element, text) {
 
 function updateTimers() {
     const timers = document.querySelectorAll('[data-timer]');
-    
+
     timers.forEach(timerEl => {
-        const minutes = parseInt(timerEl.getAttribute('data-timer'));
+        const timerId = timerEl.getAttribute('data-event-id');
         const span = timerEl.querySelector('span');
-        
-        if (span && minutes > 0) {
-            const totalSeconds = minutes * 60;
-            let remainingSeconds = totalSeconds;
-            
-            const updateDisplay = () => {
-                const mins = Math.floor(remainingSeconds / 60);
-                const secs = remainingSeconds % 60;
-                span.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-                
-                if (remainingSeconds > 0) {
-                    remainingSeconds--;
-                    setTimeout(updateDisplay, 1000);
-                } else {
-                    // Таймер истек - показываем blur
-                    const parentWrap = timerEl.closest('.right-home__wwp');
-                    if (parentWrap) {
-                        const blur = parentWrap.querySelector('.right-home__blur');
-                        if (blur) {
-                            blur.style.display = 'flex';
-                        }
-                    }
-                }
-            };
-            
-            updateDisplay();
+
+        let remainingSeconds = parseInt(localStorage.getItem(`timer_${timerId}`));
+        if (isNaN(remainingSeconds)) {
+            const minutes = parseInt(timerEl.getAttribute('data-timer')) || 1;
+            remainingSeconds = minutes * 60;
         }
+
+        const updateDisplay = () => {
+            const mins = Math.floor(remainingSeconds / 60);
+            const secs = remainingSeconds % 60;
+            if (span) span.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+            if (remainingSeconds > 0) {
+                remainingSeconds--;
+                localStorage.setItem(`timer_${timerId}`, remainingSeconds);
+                setTimeout(updateDisplay, 1000);
+            } else {
+                const parentWrap = timerEl.closest('.right-home__wwp');
+                if (parentWrap) {
+                    const blur = parentWrap.querySelector('.right-home__blur');
+                    if (blur) blur.style.display = 'flex';
+                }
+            }
+        };
+
+        updateDisplay();
     });
 }
+
 
 // ============================================
 // Обновление балансов в шапке
@@ -250,8 +250,7 @@ async function updateBetsTab() {
         const combinedData = JSON.stringify({ currentEvent, eventHistory });
         const newHash = await digestMessage(combinedData);
 
-        // 🔹 Если данные не изменились — выходим без обновления
-        if (newHash === lastBetsDataHash) return;
+        if (newHash === lastBetsDataHash) return; // данные не изменились
         lastBetsDataHash = newHash;
 
         const betsContainer = document.querySelector('.right-home__wp._bets');
@@ -281,12 +280,13 @@ async function updateBetsTab() {
                 const config = MODEL_CONFIG[bet.model_id];
                 if (!config) return '';
                 const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
+                const amount = bet.amount ?? 0; // защита от null/undefined
                 return `
                     <li>
                         <div><img src="${config.img}" alt> ${config.name}</div>
                         <div><img src="${betImage}" alt></div>
                         <div>
-                            <div class="counter" data-value="${bet.amount}">
+                            <div class="counter" data-value="${amount}">
                                 <span class="symbol">$</span>
                                 <span class="odometer">0</span>
                                 <span style="display: none;" class="decimal-od"></span>
@@ -305,7 +305,7 @@ async function updateBetsTab() {
                             <span>The event has ended</span>
                             <p>please check the "Result" tab</p>
                         </div>
-                        <div class="right-home__timer" data-timer="${remainingMinutes}">
+                        <div class="right-home__timer" data-timer="${remainingMinutes}" data-event-id="${event.id}">
                             <img src="img/Bold/Time/Clock Square.png" alt>
                             <span></span>
                         </div>
@@ -324,15 +324,11 @@ async function updateBetsTab() {
             `;
         };
 
-        // 🔹 Добавляем активное событие
         if (currentEvent) betsContainer.innerHTML += createEventHTML(currentEvent);
-
-        // 🔹 Добавляем историю, исключая активное событие
         eventHistory
             .filter(event => !currentEvent || event.id !== currentEvent.id)
             .forEach(event => betsContainer.innerHTML += createEventHTML(event));
 
-        // Обновляем счетчики и таймеры
         updateCounters();
         updateTimers();
 
@@ -340,7 +336,6 @@ async function updateBetsTab() {
         betsContainer.querySelectorAll('.right-home__element').forEach(el => {
             const blur = el.querySelector('.right-home__blur');
             const info = el.querySelector('.right-home__info');
-
             if (!blur) return;
 
             el.addEventListener('mouseenter', () => {
