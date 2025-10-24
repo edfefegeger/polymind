@@ -641,7 +641,7 @@ async function initApp() {
         await updateAISquare();
         await updateBetsTab();
         await updateResultsTab();
-    }, 5000);
+    }, 20000);
 }
 
 // Инициализация для страницы leaderboard
@@ -653,7 +653,7 @@ async function initLeaderboard() {
     setInterval(async () => {
         await updateHeaderBalances();
         await updateLeaderboard();
-    }, 5000);
+    }, 20000);
 }
 
 // Определяем какую страницу загружать
