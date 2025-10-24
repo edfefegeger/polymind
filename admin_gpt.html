@@ -110,25 +110,29 @@ async function loadEvents(){
       return;
     }
 
-    events.forEach(ev => {
-      const totalYes = ev.total_yes||0;
-      const totalNo = ev.total_no||0;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${ev.id}</td>
-        <td>${ev.description}</td>
-        <td>${Math.round((new Date(ev.end_time)-new Date(ev.start_time))/60000)} min</td>
-        <td><span class="status-badge status-${ev.status}">${ev.status}</span></td>
-        <td>${ev.status==='active' ? `YES: $${totalYes}<br>NO: $${totalNo}` : '-'}</td>
-        <td>${ev.result||'-'}</td>
-        <td class="actions">
-          ${ev.status==='active' ? `
-            <button class="warning" onclick="resolveEvent(${ev.id}, 'YES')">YES</button>
-            <button class="warning" onclick="resolveEvent(${ev.id}, 'NO')">NO</button>` : ''}
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
+events.forEach(ev => {
+  const totalYes = ev.total_yes || 0;
+  const totalNo = ev.total_no || 0;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${ev.id}</td>
+    <td>${ev.description}</td>
+    <td>${Math.round((new Date(ev.end_time)-new Date(ev.start_time))/60000)} min</td>
+    <td><span class="status-badge status-${ev.status}">${ev.status}</span></td>
+    <td>
+      YES: $${totalYes}<br>
+      NO: $${totalNo}
+    </td>
+    <td>${ev.result||'-'}</td>
+    <td class="actions">
+      ${ev.status==='active' ? `
+        <button class="warning" onclick="resolveEvent(${ev.id}, 'YES')">YES</button>
+        <button class="warning" onclick="resolveEvent(${ev.id}, 'NO')">NO</button>` : ''}
+    </td>
+  `;
+  tbody.appendChild(tr);
+});
+
   }catch(e){console.error(e);alert('Error loading events');}
 }
 
