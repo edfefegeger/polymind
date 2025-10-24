@@ -2099,3 +2099,36 @@ body.ie ._ibg img {
   width: 20px;
   margin-right: 8px;
 }
+
+
+
+
+
+
+
+.right-home__blur {
+    display: flex; /* или block */
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    pointer-events: all; /* чтобы мышь могла срабатывать */
+}
+
+.right-home__blur._hidden {
+    opacity: 0;
+    pointer-events: none; /* чтобы не блокировать элементы под blur */
+}
+.home__top {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+
+
+#bubbleMap {
+    background-color: #111;
+    border-radius: 0px;
+    overflow: hidden;
+    display: block;
+    position: relative;
+}

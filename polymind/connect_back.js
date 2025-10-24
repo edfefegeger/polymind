@@ -242,7 +242,7 @@ async function updateBetsTab() {
     try {
         const [currentEvent, eventHistory] = await Promise.all([
             fetch(`${API_URL}/events/current`).then(r => r.json().catch(() => null)),
-            fetch(`${API_URL}/events/history?limit=10`).then(r => r.json().catch(() => []))
+            fetch(`${API_URL}/events/history?limit=20`).then(r => r.json().catch(() => []))
         ]);
 
         const combinedData = JSON.stringify({ currentEvent, eventHistory });
@@ -699,3 +699,189 @@ document.addEventListener('DOMContentLoaded', () => {
         initApp();
     }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function updateBubbleMapFromModels(models) {
+    const items = models.map(m => ({
+        model: m.name,
+        balance: m.balance,
+        delta: m.balance - 10000
+    }));
+    
+    // Проверяем, изменились ли данные
+    const currentState = JSON.stringify(items.map(i => ({n: i.model, b: i.balance})));
+    if (lastModelsState === currentState) {
+        return; // Данные не изменились, не перерисовываем
+    }
+    
+    lastModelsState = currentState;
+    renderTreemap(items);
+}
+
+async function fetchModels() {
+    const res = await fetch(`${API}/models`);
+    const models = await res.json();
+    const tbody = document.querySelector("#modelsTable tbody");
+    tbody.innerHTML = "";
+    models.forEach(m => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${m.name}</td>
+                        <td>${m.balance.toFixed(2)}</td>
+                        <td>${m.wins}</td>
+                        <td>${m.total_bets}</td>`;
+        tbody.appendChild(tr);
+    });
+    
+    // Обновляем bubble map при обновлении моделей
+    updateBubbleMapFromModels(models);
+}
+
+// -------------------------
+// Bubble Map WebSocket
+// -------------------------
+const ws = new WebSocket("ws://localhost:8000/ws/bubble-map");
+
+ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if(data.type === "bubble_map") {
+        renderTreemap(data.data);
+    }
+}
+function renderTreemap(items) {
+    const container = document.getElementById("bubbleMap");
+    container.innerHTML = "";
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+
+    // 🎨 Цвета и лого в стиле как на фото
+    const MODEL_STYLES = {
+        "GPT": {
+            color: "#268383ff",
+            logo: "img/gpt.png"
+        },
+        "Gemini Pro": {
+            color: "#5FA8E1",
+            logo: "img/gemeni.png"
+        },
+        "Qwen Max": {
+            color: "#A58AF9",
+            logo: "img/quen.png"
+        },
+        "Claude": {
+            color: "#E89A7A",
+            logo: "img/claude.png"
+        },
+        "Grok": {
+            color: "#2B2B2B",
+            logo: "img/grock.png"
+        },
+        "DeepSeek": {
+            color: "#6367b4ff",
+            logo: "img/deepseek.png"
+        }
+    };
+
+    // Создаём один блок
+    function createBlock(item, x, y, w, h) {
+        const div = document.createElement("div");
+        div.style.position = "absolute";
+        div.style.left = `${x}px`;
+        div.style.top = `${y}px`;
+        div.style.width = `${w}px`;
+        div.style.height = `${h}px`;
+        div.style.borderRadius = "2px";
+        div.style.overflow = "hidden";
+        div.style.display = "flex";
+        div.style.flexDirection = "column";
+        div.style.justifyContent = "center";
+        div.style.alignItems = "center";
+        div.style.textAlign = "center";
+        div.style.fontFamily = "'IBM Plex Sans', 'Inter', sans-serif";
+        div.style.fontWeight = "600";
+        div.style.color = "rgba(255,255,255,0.95)";
+        div.style.transition = "transform 0.3s ease, box-shadow 0.3s ease";
+        div.style.background = MODEL_STYLES[item.model]?.color || "#555";
+        div.style.boxShadow = "inset 0 0 40px rgba(255,255,255,0.1)";
+
+        const name = document.createElement("div");
+        name.textContent = item.model;
+        name.style.fontSize = "17px";
+        name.style.marginBottom = "6px";
+
+        const bal = document.createElement("div");
+        bal.textContent = `$${item.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        bal.style.fontSize = "12px";
+        bal.style.opacity = "0.9";
+        bal.style.marginBottom = "10px";
+
+        const img = document.createElement("img");
+        img.src = MODEL_STYLES[item.model]?.logo || "";
+        img.alt = item.model;
+        img.style.width = "30px";
+        img.style.height = "30px";
+        img.style.opacity = "0.9";
+
+        div.appendChild(name);
+        div.appendChild(bal);
+        div.appendChild(img);
+
+        div.addEventListener("mouseenter", () => {
+            div.style.transform = "scale(1.03)";
+            div.style.boxShadow = "0 0 25px rgba(255,255,255,0.25)";
+        });
+        div.addEventListener("mouseleave", () => {
+            div.style.transform = "scale(1)";
+            div.style.boxShadow = "inset 0 0 40px rgba(255,255,255,0.1)";
+        });
+
+        container.appendChild(div);
+    }
+
+    // Разбиение
+    function layout(x, y, w, h, data) {
+        if (data.length === 0) return;
+
+        if (data.length === 1) {
+            createBlock(data[0], x, y, w, h);
+            return;
+        }
+
+        const horizontal = Math.random() > 0.5;
+
+        let minSplit = Math.max(1, Math.floor(0.3 * data.length));
+        let maxSplit = Math.min(data.length - 1, Math.floor(0.7 * data.length));
+        if (maxSplit <= minSplit) maxSplit = minSplit + 1;
+        const splitIndex = Math.floor(minSplit + Math.random() * (maxSplit - minSplit));
+
+        const first = data.slice(0, splitIndex);
+        const rest = data.slice(splitIndex);
+
+        const firstTotal = first.reduce((s, i) => s + i.balance, 0);
+        const restTotal = rest.reduce((s, i) => s + i.balance, 0);
+        const total = firstTotal + restTotal;
+
+        if (horizontal) {
+            const w1 = w * (firstTotal / total);
+            layout(x, y, w1, h, first);
+            layout(x + w1, y, w - w1, h, rest);
+        } else {
+            const h1 = h * (firstTotal / total);
+            layout(x, y, w, h1, first);
+            layout(x, y + h1, w, h - h1, rest);
+        }
+    }
+
+    layout(0, 0, W, H, items);
+}
