@@ -236,9 +236,7 @@ function addNewItems() {
 }
 
 
-
 let lastBetsDataHash = "";
-
 
 async function updateBetsTab() {
     try {
@@ -256,9 +254,14 @@ async function updateBetsTab() {
         const betsContainer = document.querySelector('.right-home__wp._bets');
         if (!betsContainer) return;
 
-        betsContainer.innerHTML = '';
+        // Сохраняем существующие события для сравнения
+        const existingEvents = new Map();
+        betsContainer.querySelectorAll('.right-home__element').forEach(el => {
+            const eventId = el.getAttribute('data-event-id');
+            if (eventId) existingEvents.set(eventId, el);
+        });
 
-        const createEventHTML = (event) => {
+        const createEventHTML = (event, isUpdate = false) => {
             const now = new Date();
             const startTime = new Date(event.start_time);
             const endTime = new Date(event.end_time);
@@ -280,7 +283,7 @@ async function updateBetsTab() {
                 const config = MODEL_CONFIG[bet.model_id];
                 if (!config) return '';
                 const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
-                const amount = bet.amount ?? 0; // защита от null/undefined
+                const amount = bet.amount ?? 0;
                 return `
                     <li>
                         <div><img src="${config.img}" alt> ${config.name}</div>
@@ -296,8 +299,10 @@ async function updateBetsTab() {
                 `;
             }).join('');
 
+            const animationClass = isUpdate ? '' : '_animation';
+
             return `
-                <div class="right-home__element _animation">
+                <div class="right-home__element ${animationClass}" data-event-id="${event.id}">
                     <div class="right-home__top">${event.description}</div>
                     <div class="right-home__wwp">
                         <div class="right-home__blur" style="display: ${showBlur ? 'flex' : 'none'}">
@@ -324,39 +329,70 @@ async function updateBetsTab() {
             `;
         };
 
-        if (currentEvent) betsContainer.innerHTML += createEventHTML(currentEvent);
+        // Обновляем или создаем события
+        const processedEventIds = new Set();
+        const allEvents = [];
+        
+        if (currentEvent) allEvents.push(currentEvent);
         eventHistory
             .filter(event => !currentEvent || event.id !== currentEvent.id)
-            .forEach(event => betsContainer.innerHTML += createEventHTML(event));
+            .forEach(event => allEvents.push(event));
+
+        allEvents.forEach(event => {
+            processedEventIds.add(event.id);
+            
+            if (existingEvents.has(event.id)) {
+                // Обновляем существующий элемент
+                const existingEl = existingEvents.get(event.id);
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = createEventHTML(event, true);
+                const newEl = tempDiv.firstElementChild;
+                
+                existingEl.replaceWith(newEl);
+                
+                // Восстанавливаем обработчики hover
+                setupHoverEffect(newEl);
+            } else {
+                // Добавляем новый элемент
+                betsContainer.insertAdjacentHTML('beforeend', createEventHTML(event, false));
+                const newEl = betsContainer.lastElementChild;
+                setupHoverEffect(newEl);
+            }
+        });
+
+        // Удаляем события, которых больше нет
+        existingEvents.forEach((el, eventId) => {
+            if (!processedEventIds.has(eventId)) {
+                el.remove();
+            }
+        });
 
         updateCounters();
         updateTimers();
-
-        // Hover effect для blur
-        betsContainer.querySelectorAll('.right-home__element').forEach(el => {
-            const blur = el.querySelector('.right-home__blur');
-            const info = el.querySelector('.right-home__info');
-            if (!blur) return;
-
-            el.addEventListener('mouseenter', () => {
-                blur.classList.add('_hidden'); 
-                if (info) info.style.filter = 'none';
-            });
-
-            el.addEventListener('mouseleave', () => {
-                blur.classList.remove('_hidden'); 
-                if (info) info.style.filter = '';
-            });
-        });
 
     } catch (error) {
         console.error('Error updating bets tab:', error);
     }
 }
 
+// Вспомогательная функция для настройки hover эффекта
+function setupHoverEffect(element) {
+    const blur = element.querySelector('.right-home__blur');
+    const info = element.querySelector('.right-home__info');
+    if (!blur) return;
 
+    element.addEventListener('mouseenter', () => {
+        blur.classList.add('_hidden'); 
+        if (info) info.style.filter = 'none';
+    });
 
-// 👇 Хэширование JSON данных, чтобы понять, изменились ли они
+    element.addEventListener('mouseleave', () => {
+        blur.classList.remove('_hidden'); 
+        if (info) info.style.filter = '';
+    });
+}
+
+// Хэширование JSON данных
 async function digestMessage(message) {
     const msgUint8 = new TextEncoder().encode(message);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -364,9 +400,8 @@ async function digestMessage(message) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Автообновление раз в 5 секунд, но обновляем DOM только при новых данных
+// Автообновление раз в 5 секунд
 setInterval(updateBetsTab, 5000);
-
 
 // ============================================
 // Обновление вкладки Results
