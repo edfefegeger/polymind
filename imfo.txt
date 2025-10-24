@@ -1,0 +1,154 @@
+
+когда обновляем цифры которые должны анимироваться (эффект одметра)
+updateCounters();
+
+
+
+когда вставляем новый текст от ИИ в чат (эффект печатной машинки )
+initTextAnimation();
+
+
+
+
+анимация графика на странице leaderbord
+
+<div class="leaderbord__element leaderbord__element_gemeni">
+							<img src="img/gemeni-c.png" alt>
+
+							<div style="--height: 40%;"></div>
+							<div></div>
+						</div>
+
+вот так выглядит эллемент html одной палки (gemeni). все что нужно тут сделать - изменить процентное значнеие --height: 40%;  
+
+
+
+
+
+по поводу обновлений цифр которые должны анимироваться (эффект одметра)
+
+<div class="counter" data-value="109375.50">
+										<span class="symbol">$</span>
+										<span class="odometer">0</span>
+										<span>.</span>
+										<span class="decimal-od">00</span>
+									</div>
+
+
+пример верхний плашки в шапке.  все что тебе тут нужно - изменить значение в data-value="109375.50"
+
+так как по сайту анимация используется в разных местах то она идет в разных форматах. например гдето формат +8.40% гдето $1,490 и тд. везде немного разнится html. обрати на это внимание.  и испольщуй тот html для каждого формата который есть в файле. 
+
+
+
+
+значения таймера прописывается в data-timer="1" (минуты)
+
+
+
+
+когда добавляем новые плашки с ценами
+
+addNewItems()
+
+
+плашку следует добавлять в блок 
+важно !  когда мы добавляем новые элементы на сайт когда он уже загружен то добавляем элементу класс _animation
+пример html
+<div class="right-home__element _animation">
+
+								<div class="right-home__top">BTC > 110K in 10 min</div>
+								<div class="right-home__wwp">
+									<div class="right-home__blur">
+										<img src="img/cec.png" alt>
+										<span>The event has ended</span>
+										<p>please check the "Result" tab</p>
+									</div>
+									<div class="right-home__timer" data-timer="1"><img src="img/Bold/Time/Clock Square.png"
+											alt>
+										<span></span>
+									</div>
+									<div class="right-home__info">
+										<div class="right-home__top-info">
+											<div>Model</div>
+											<div>Bet</div>
+											<div>Amount</div>
+										</div>
+										<ul class="right-home__list">
+											<li>
+												<div><img src="img/gpt-c.png" alt> GPT-5 </div>
+												<div><img src="img/ues.png" alt></div>
+
+												<!-- если нужно с анимацией  -->
+												<div>
+													<div class="counter" data-value="150">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+												<!-- если нужно с анимацией  -->
+
+												<!-- если нужно без анимациии  -->
+												<!-- <div>$250</div> -->
+												<!-- если нужно без анимациии  -->
+											</li>
+											<li>
+												<div><img src="img/deepsick-c.png" alt> DeepSeek </div>
+												<div><img src="img/no.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+											<li>
+												<div><img src="img/clause-c.png" alt> Claude </div>
+												<div><img src="img/ues.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+											<li>
+												<div><img src="img/grock-c.png" alt> Grok </div>
+												<div><img src="img/no.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+											<li>
+												<div><img src="img/gemeni-c.png" alt> Gemini </div>
+												<div><img src="img/ues.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+											<li>
+												<div><img src="img/quen-c.png" alt> Qwen </div>
+												<div><img src="img/no.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>

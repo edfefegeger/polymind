@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Multi Odometer Counters $109,375.50</title>
+		<link rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-default.min.css" />
+		<style>
+  body {
+    background: #111;
+    color: #fff;
+    font-family: monospace;
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  .counter {
+    font-size: 48px;
+    display: flex;
+    align-items: baseline;
+  }
+  .counter .symbol {
+    margin-right: 4px;
+    font-size: 48px;
+  }
+  .odometer {
+    min-width: 120px;
+  }
+  .decimal-od {
+    min-width: 40px;
+    margin-left: 2px;
+  }
+</style>
+	</head>
+	<body>
+
+		<div class="counter" data-value="109375.50">
+			<span class="symbol">$</span>
+			<span class="odometer">0</span>
+			<span>.</span>
+			<span class="decimal-od">00</span>
+		</div>
+		<div class="counter" data-value="8750.75">
+			<span class="symbol">$</span>
+			<span class="odometer">0</span>
+			<span>.</span>
+			<span class="decimal-od">00</span>
+		</div>
+		<div class="counter" data-value="54321.10">
+			<span class="symbol">$</span>
+			<span class="odometer">0</span>
+			<span>.</span>
+			<span class="decimal-od">00</span>
+		</div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/odometer.min.js"></script>
+		<script>
+const counters = document.querySelectorAll('.counter');
+const odInstances = [];
+
+counters.forEach(el => {
+  const intEl = el.querySelector('.odometer');
+  const decEl = el.querySelector('.decimal-od');
+
+  const value = parseFloat(el.dataset.value);
+  const intPart = Math.floor(value);
+  const decPart = ((value - intPart) * 100).toFixed(0); // два знака как число
+
+  // Odometer для целой части
+  const odInt = new Odometer({
+    el: intEl,
+    format: 'd,ddd',
+    duration: 2000,
+    theme: 'default'
+  });
+  odInt.render();
+  odInt.update(intPart);
+
+  // Odometer для дробной части
+  const odDec = new Odometer({
+    el: decEl,
+    format: 'dd',
+    duration: 1000,
+    theme: 'default'
+  });
+  odDec.render();
+  odDec.update(decPart);
+
+  el.dataset.prevValue = value;
+  odInstances.push({ el, odInt, odDec });
+});
+
+// Функция обновления всех счетчиков
+function updateCounters() {
+  odInstances.forEach(item => {
+    const el = item.el;
+    const newValue = parseFloat(el.dataset.value);
+    const prevValue = parseFloat(el.dataset.prevValue);
+    if (newValue === prevValue) return;
+
+    const intPart = Math.floor(newValue);
+    const decPart = ((newValue - intPart) * 100).toFixed(0);
+
+    item.odInt.update(intPart);
+    item.odDec.update(decPart);
+    el.dataset.prevValue = newValue;
+  });
+}
+
+// Пример ручного обновления
+// document.querySelectorAll('.counter')[0].dataset.value = "110500.25";
+// updateCounters();
+</script>
+	</body>
+</html>
