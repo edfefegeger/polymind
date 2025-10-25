@@ -153,31 +153,46 @@ function updateTimers() {
 // Обновление балансов в шапке
 // ============================================
 
+// ============================================
+// Обновление балансов в шапке (с сортировкой по убыванию)
+// ============================================
+
 async function updateHeaderBalances() {
     try {
         const response = await fetch(`${API_URL}/models`);
         const models = await response.json();
         
+        // Сортируем модели по балансу (от большего к меньшему)
+        const sortedModels = models.sort((a, b) => b.balance - a.balance);
+        
         const headerBlock = document.querySelector('.header__block');
         if (!headerBlock) return;
         
-        const headerElements = headerBlock.querySelectorAll('.header__el');
+        // Очищаем существующие элементы
+        headerBlock.innerHTML = '';
         
-        models.forEach((model, index) => {
-            if (headerElements[index]) {
-                const config = MODEL_CONFIG[model.name];
-                if (!config) return;
-                
-                const img = headerElements[index].querySelector('img');
-                const nameSpan = headerElements[index].querySelector('span');
-                const counter = headerElements[index].querySelector('.counter');
-                
-                if (img) img.src = config.img;
-                if (nameSpan) nameSpan.textContent = config.name;
-                if (counter) {
-                    counter.setAttribute('data-value', model.balance.toFixed(2));
-                }
-            }
+        // Создаем отсортированные элементы
+        sortedModels.forEach((model) => {
+            const config = MODEL_CONFIG[model.name];
+            if (!config) return;
+            
+            const headerEl = document.createElement('div');
+            headerEl.className = 'header__el';
+            
+            headerEl.innerHTML = `
+                <div>
+                    <img src="${config.img}" alt>
+                    <span>${config.name}</span>
+                </div>
+                <div class="counter" data-value="${model.balance.toFixed(2)}">
+                    <span class="symbol">$</span>
+                    <span class="odometer">0</span>
+                    <span>.</span>
+                    <span class="decimal-od">00</span>
+                </div>
+            `;
+            
+            headerBlock.appendChild(headerEl);
         });
         
         updateCounters();
@@ -185,7 +200,6 @@ async function updateHeaderBalances() {
         console.error('Error updating header balances:', error);
     }
 }
-
 // ============================================
 // Обновление AI Square (главная страница)
 // ============================================
