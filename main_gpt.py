@@ -440,11 +440,16 @@ async def scheduler():
         db = SessionLocal()
         event = db.query(Event).filter_by(status="upcoming").first()
         if event:
+            # ВАЖНО: когда событие становится активным, устанавливаем новое end_time
+            now = datetime.utcnow()
+            duration = event.end_time - event.start_time  # Оригинальная длительность
+            event.start_time = now  # Новое время старта
+            event.end_time = now + duration  # Новое время окончания
             event.status = "active"
             db.commit()
             await generate_bets(event)
         db.close()
-        await asyncio.sleep(300)
+        await asyncio.sleep(180)
 
 @app.on_event("startup")
 async def startup_event():

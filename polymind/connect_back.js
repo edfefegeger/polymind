@@ -96,20 +96,35 @@ function initTextAnimation(element, text) {
     
     typeWriter();
 }
-
-
 function updateTimers() {
-    const timers = document.querySelectorAll('[data-timer]');
+    const timers = document.querySelectorAll('[data-timer-seconds]');
 
     timers.forEach(timerEl => {
         const timerId = timerEl.getAttribute('data-event-id');
+        const eventStatus = timerEl.getAttribute('data-event-status');
         const span = timerEl.querySelector('span');
-
-        let remainingSeconds = parseInt(localStorage.getItem(`timer_${timerId}`));
-        if (isNaN(remainingSeconds)) {
-            const minutes = parseInt(timerEl.getAttribute('data-timer')) || 1;
-            remainingSeconds = minutes * 60;
+        
+        // Пропускаем завершенные события
+        if (eventStatus === 'finished') {
+            if (span) span.textContent = '0:00';
+            return;
         }
+        
+        // Проверяем, не запущен ли уже таймер для этого события
+        if (timerEl.dataset.timerRunning === 'true') {
+            return;
+        }
+        
+        timerEl.dataset.timerRunning = 'true';
+
+        // Получаем оставшееся время в секундах из атрибута
+        let remainingSeconds = parseInt(timerEl.getAttribute('data-timer-seconds'));
+        
+        if (isNaN(remainingSeconds) || remainingSeconds < 0) {
+            remainingSeconds = 0;
+        }
+        
+        console.log(`Starting timer for event ${timerId}: ${remainingSeconds} seconds`);
 
         const updateDisplay = () => {
             const mins = Math.floor(remainingSeconds / 60);
@@ -121,6 +136,8 @@ function updateTimers() {
                 localStorage.setItem(`timer_${timerId}`, remainingSeconds);
                 setTimeout(updateDisplay, 1000);
             } else {
+                localStorage.removeItem(`timer_${timerId}`);
+                timerEl.dataset.timerRunning = 'false';
                 const parentWrap = timerEl.closest('.right-home__wwp');
                 if (parentWrap) {
                     const blur = parentWrap.querySelector('.right-home__blur');
@@ -242,74 +259,92 @@ async function updateBetsTab() {
             const eventId = el.getAttribute('data-event-id');
             if (eventId) existingEvents.set(eventId, el);
         });
+const createEventHTML = (event, isUpdate = false) => {
+    const now = new Date();
+    const endTime = new Date(event.end_time + 'Z'); // Добавляем Z для UTC
+    const startTime = new Date(event.start_time + 'Z');
+    
+    let remainingSeconds = 0;
+    let showBlur = false;
 
-        const createEventHTML = (event, isUpdate = false) => {
-            const now = new Date();
-            const startTime = new Date(event.start_time);
-            const endTime = new Date(event.end_time);
-            let remainingMinutes = 0;
-            let showBlur = false;
+    if (event.status === "active") {
+        // Рассчитываем реальное оставшееся время в СЕКУНДАХ
+        remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
+        showBlur = false;
+        
+        console.log(`Event ${event.id}: now=${now.toISOString()}, endTime=${endTime.toISOString()}, remaining=${remainingSeconds}s`);
+        
+        // Проверяем, есть ли сохраненное время в localStorage
+        const savedSeconds = parseInt(localStorage.getItem(`timer_${event.id}`));
+        if (!isNaN(savedSeconds) && savedSeconds > 0 && savedSeconds < remainingSeconds) {
+            // Используем сохраненное время только если оно меньше реального
+            remainingSeconds = savedSeconds;
+        }
+        
+        // Если осталось меньше 5 секунд, считаем что событие закончилось
+        if (remainingSeconds < 5) {
+            showBlur = true;
+            remainingSeconds = 0;
+        }
+    } else if (event.status === "finished") {
+        remainingSeconds = 0;
+        showBlur = true;
+        localStorage.removeItem(`timer_${event.id}`);
+    } else if (event.status === "upcoming") {
+        // Для upcoming используем длительность события
+        remainingSeconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
+        showBlur = false;
+    }
 
-            if (event.status === "upcoming") {
-                remainingMinutes = Math.max(1, Math.floor((endTime - startTime) / 60000));
-                showBlur = false;
-            } else if (event.status === "active") {
-                remainingMinutes = Math.max(1, Math.floor((endTime - now) / 60000));
-                showBlur = false;
-            } else if (event.status === "finished") {
-                remainingMinutes = 0;
-                showBlur = true;
-            }
-
-            const betsHTML = event.bets.map(bet => {
-                const config = MODEL_CONFIG[bet.model_id];
-                if (!config) return '';
-                const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
-                const amount = bet.amount ?? 0;
-                return `
-                    <li>
-                        <div><img src="${config.img}" alt> ${config.name}</div>
-                        <div><img src="${betImage}" alt></div>
-                        <div>
-                            <div class="counter" data-value="${amount}">
-                                <span class="symbol">$</span>
-                                <span class="odometer">0</span>
-                                <span style="display: none;" class="decimal-od"></span>
-                            </div>
-                        </div>
-                    </li>
-                `;
-            }).join('');
-
-            const animationClass = isUpdate ? '' : '_animation';
-
-            return `
-                <div class="right-home__element ${animationClass}" data-event-id="${event.id}">
-                    <div class="right-home__top">${event.description}</div>
-                    <div class="right-home__wwp">
-                        <div class="right-home__blur" style="display: ${showBlur ? 'flex' : 'none'}">
-                            <img src="img/cec.png" alt>
-                            <span>The event has ended</span>
-                            <p>please check the "Result" tab</p>
-                        </div>
-                        <div class="right-home__timer" data-timer="${remainingMinutes}" data-event-id="${event.id}">
-                            <img src="img/Bold/Time/Clock Square.png" alt>
-                            <span></span>
-                        </div>
-                        <div class="right-home__info">
-                            <div class="right-home__top-info">
-                                <div>Model</div>
-                                <div>Bet</div>
-                                <div>Amount</div>
-                            </div>
-                            <ul class="right-home__list">
-                                ${betsHTML}
-                            </ul>
-                        </div>
+    const betsHTML = event.bets.map(bet => {
+        const config = MODEL_CONFIG[bet.model_id];
+        if (!config) return '';
+        const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
+        const amount = bet.amount ?? 0;
+        return `
+            <li>
+                <div><img src="${config.img}" alt> ${config.name}</div>
+                <div><img src="${betImage}" alt></div>
+                <div>
+                    <div class="counter" data-value="${amount}">
+                        <span class="symbol">$</span>
+                        <span class="odometer">0</span>
+                        <span style="display: none;" class="decimal-od"></span>
                     </div>
                 </div>
-            `;
-        };
+            </li>
+        `;
+    }).join('');
+
+    const animationClass = isUpdate ? '' : '_animation';
+
+    return `
+        <div class="right-home__element ${animationClass}" data-event-id="${event.id}">
+            <div class="right-home__top">${event.description}</div>
+            <div class="right-home__wwp">
+                <div class="right-home__blur" style="display: ${showBlur ? 'flex' : 'none'}">
+                    <img src="img/cec.png" alt>
+                    <span>The event has ended</span>
+                    <p>please check the "Result" tab</p>
+                </div>
+                <div class="right-home__timer" data-timer-seconds="${remainingSeconds}" data-event-id="${event.id}" data-event-status="${event.status}">
+                    <img src="img/Bold/Time/Clock Square.png" alt>
+                    <span></span>
+                </div>
+                <div class="right-home__info">
+                    <div class="right-home__top-info">
+                        <div>Model</div>
+                        <div>Bet</div>
+                        <div>Amount</div>
+                    </div>
+                    <ul class="right-home__list">
+                        ${betsHTML}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `;
+};
 
         const processedEventIds = new Set();
         const allEvents = [];
