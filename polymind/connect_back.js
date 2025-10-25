@@ -1,10 +1,6 @@
-// ============================================
-// Polymind Arena - Site Integration
-// ============================================
+const API_URL = "https://api.polymind.me:443";
 
-const API_URL = "http://localhost:8000";
 
-// Маппинг моделей на изображения и названия
 const MODEL_CONFIG = {
     "GPT": {
         img: "img/gpt-c.png",
@@ -38,7 +34,6 @@ const MODEL_CONFIG = {
     }
 };
 
-// Маппинг моделей на CSS классы для графиков
 const MODEL_CHART_CLASSES = {
     "GPT": "leaderbord__element_gpt",
     "Claude": "leaderbord__element_clause",
@@ -47,10 +42,6 @@ const MODEL_CHART_CLASSES = {
     "DeepSeek": "leaderbord__element_deepsick",
     "Qwen Max": "leaderbord__element_quen"
 };
-
-// ============================================
-// Утилиты для работы с Odometer
-// ============================================
 
 function updateCounters() {
     const counters = document.querySelectorAll('.counter');
@@ -63,7 +54,7 @@ function updateCounters() {
             const integerPart = Math.floor(value);
             const decimalPart = Math.round((value - integerPart) * 100);
             
-            // Инициализация Odometer для целой части
+
             if (!odometer.odometer) {
                 odometer.odometer = new Odometer({
                     el: odometer,
@@ -74,7 +65,7 @@ function updateCounters() {
             }
             odometer.odometer.update(integerPart);
             
-            // Обновляем десятичную часть
+
             if (decimalOd && decimalOd.style.display !== 'none') {
                 if (!decimalOd.odometer) {
                     decimalOd.odometer = new Odometer({
@@ -90,9 +81,6 @@ function updateCounters() {
     });
 }
 
-// ============================================
-// Анимация текста (печатная машинка)
-// ============================================
 
 function initTextAnimation(element, text) {
     element.textContent = '';
@@ -109,9 +97,6 @@ function initTextAnimation(element, text) {
     typeWriter();
 }
 
-// ============================================
-// Обновление таймеров
-// ============================================
 
 function updateTimers() {
     const timers = document.querySelectorAll('[data-timer]');
@@ -149,29 +134,20 @@ function updateTimers() {
 }
 
 
-// ============================================
-// Обновление балансов в шапке
-// ============================================
-
-// ============================================
-// Обновление балансов в шапке (с сортировкой по убыванию)
-// ============================================
 
 async function updateHeaderBalances() {
     try {
         const response = await fetch(`${API_URL}/models`);
         const models = await response.json();
         
-        // Сортируем модели по балансу (от большего к меньшему)
         const sortedModels = models.sort((a, b) => b.balance - a.balance);
         
         const headerBlock = document.querySelector('.header__block');
         if (!headerBlock) return;
         
-        // Очищаем существующие элементы
         headerBlock.innerHTML = '';
         
-        // Создаем отсортированные элементы
+
         sortedModels.forEach((model) => {
             const config = MODEL_CONFIG[model.name];
             if (!config) return;
@@ -200,9 +176,7 @@ async function updateHeaderBalances() {
         console.error('Error updating header balances:', error);
     }
 }
-// ============================================
-// Обновление AI Square (главная страница)
-// ============================================
+
 
 async function updateAISquare() {
     try {
@@ -234,15 +208,11 @@ async function updateAISquare() {
     }
 }
 
-// ============================================
-// Добавление новых событий (Bets)
-// ============================================
 
 function addNewItems() {
     const betsContainer = document.querySelector('.right-home__wp._bets');
     if (!betsContainer) return;
     
-    // Добавляем класс анимации к новому элементу
     const newElements = betsContainer.querySelectorAll('.right-home__element:not(._animation)');
     newElements.forEach(el => {
         el.classList.add('_animation');
@@ -251,7 +221,6 @@ function addNewItems() {
 
 
 let lastBetsDataHash = "";
-
 async function updateBetsTab() {
     try {
         const [currentEvent, eventHistory] = await Promise.all([
@@ -262,13 +231,12 @@ async function updateBetsTab() {
         const combinedData = JSON.stringify({ currentEvent, eventHistory });
         const newHash = await digestMessage(combinedData);
 
-        if (newHash === lastBetsDataHash) return; // данные не изменились
+        if (newHash === lastBetsDataHash) return; 
         lastBetsDataHash = newHash;
 
         const betsContainer = document.querySelector('.right-home__wp._bets');
         if (!betsContainer) return;
 
-        // Сохраняем существующие события для сравнения
         const existingEvents = new Map();
         betsContainer.querySelectorAll('.right-home__element').forEach(el => {
             const eventId = el.getAttribute('data-event-id');
@@ -343,20 +311,26 @@ async function updateBetsTab() {
             `;
         };
 
-        // Обновляем или создаем события
         const processedEventIds = new Set();
         const allEvents = [];
         
-        if (currentEvent) allEvents.push(currentEvent);
+        if (currentEvent && currentEvent.status === 'active') {
+            allEvents.push(currentEvent);
+        }
+        
         eventHistory
-            .filter(event => !currentEvent || event.id !== currentEvent.id)
+            .filter(event => {
+   
+                const isActiveOrFinished = event.status === 'active' || event.status === 'finished';
+                const isNotCurrentEvent = !currentEvent || event.id !== currentEvent.id;
+                return isActiveOrFinished && isNotCurrentEvent;
+            })
             .forEach(event => allEvents.push(event));
 
         allEvents.forEach(event => {
             processedEventIds.add(event.id);
             
             if (existingEvents.has(event.id)) {
-                // Обновляем существующий элемент
                 const existingEl = existingEvents.get(event.id);
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = createEventHTML(event, true);
@@ -364,17 +338,15 @@ async function updateBetsTab() {
                 
                 existingEl.replaceWith(newEl);
                 
-                // Восстанавливаем обработчики hover
                 setupHoverEffect(newEl);
             } else {
-                // Добавляем новый элемент
+              
                 betsContainer.insertAdjacentHTML('beforeend', createEventHTML(event, false));
                 const newEl = betsContainer.lastElementChild;
                 setupHoverEffect(newEl);
             }
         });
 
-        // Удаляем события, которых больше нет
         existingEvents.forEach((el, eventId) => {
             if (!processedEventIds.has(eventId)) {
                 el.remove();
@@ -389,7 +361,6 @@ async function updateBetsTab() {
     }
 }
 
-// Вспомогательная функция для настройки hover эффекта
 function setupHoverEffect(element) {
     const blur = element.querySelector('.right-home__blur');
     const info = element.querySelector('.right-home__info');
@@ -406,7 +377,7 @@ function setupHoverEffect(element) {
     });
 }
 
-// Хэширование JSON данных
+
 async function digestMessage(message) {
     const msgUint8 = new TextEncoder().encode(message);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -414,12 +385,9 @@ async function digestMessage(message) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Автообновление раз в 5 секунд
 setInterval(updateBetsTab, 5000);
 
-// ============================================
-// Обновление вкладки Results
-// ============================================
+
 
 async function updateResultsTab() {
     try {
@@ -472,18 +440,15 @@ async function updateResultsTab() {
     }
 }
 
-// ============================================
-// Обновление Leaderboard
-// ============================================
 
 async function updateLeaderboard() {
     try {
         const leaderboard = await fetch(`${API_URL}/leaderboard`).then(r => r.json());
         
-        // Обновляем таблицу
+ 
         const leaderboardTop = document.querySelector('.leaderbord__top');
         if (leaderboardTop) {
-            // Удаляем все элементы кроме заголовка
+
             const elements = leaderboardTop.querySelectorAll('.leaderbord__el:not(:first-child)');
             elements.forEach(el => el.remove());
             
@@ -532,7 +497,7 @@ async function updateLeaderboard() {
             });
         }
         
-        // Обновляем график
+
         const maxPnL = Math.max(...leaderboard.map(item => item.total_pnl));
         
         leaderboard.forEach(item => {
@@ -551,7 +516,7 @@ async function updateLeaderboard() {
             }
         });
         
-        // Обновляем победителя
+
         if (leaderboard.length > 0) {
             const winner = leaderboard[0];
             const config = MODEL_CONFIG[winner.model];
@@ -670,21 +635,17 @@ function initAIChat() {
     });
 }
 
-// ============================================
-// Инициализация и автообновление
-// ============================================
 
 async function initApp() {
-    // Инициализируем все секции
+
     await updateHeaderBalances();
     await updateAISquare();
     await updateBetsTab();
     await updateResultsTab();
     
-    // Инициализируем чат
     initAIChat();
     
-    // Автообновление каждые 5 секунд
+
     setInterval(async () => {
         await updateHeaderBalances();
         await updateAISquare();
@@ -693,7 +654,6 @@ async function initApp() {
     }, 20000);
 }
 
-// Инициализация для страницы leaderboard
 async function initLeaderboard() {
     await updateHeaderBalances();
     await updateLeaderboard();
@@ -704,7 +664,7 @@ async function initLeaderboard() {
     }, 20000);
 }
 
-// Определяем какую страницу загружать
+
 document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('.leaderbord')) {
         initLeaderboard();
@@ -730,10 +690,10 @@ function updateBubbleMapFromModels(models) {
         delta: m.balance - 10000
     }));
     
-    // Проверяем, изменились ли данные
+
     const currentState = JSON.stringify(items.map(i => ({n: i.model, b: i.balance})));
     if (lastModelsState === currentState) {
-        return; // Данные не изменились, не перерисовываем
+        return; 
     }
     
     lastModelsState = currentState;
@@ -754,28 +714,60 @@ async function fetchModels() {
         tbody.appendChild(tr);
     });
     
-    // Обновляем bubble map при обновлении моделей
+
     updateBubbleMapFromModels(models);
 }
-
 // -------------------------
-// Bubble Map WebSocket
+// Bubble Map HTTP Polling (вместо WebSocket)
 // -------------------------
-const ws = new WebSocket("ws://localhost:8000/ws/bubble-map");
+let lastData = [];
+let lastModelsState = "";
 
-ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
-    if(data.type === "bubble_map") {
-        renderTreemap(data.data);
+async function updateBubbleMap() {
+    try {
+        const response = await fetch(`${API_URL}/models`);
+        const models = await response.json();
+        
+        const items = models.map(m => ({
+            model: m.name,
+            balance: m.balance,
+            delta: m.balance - 10000
+        }));
+        
+        // Проверяем, изменились ли данные
+        const currentState = JSON.stringify(items.map(i => ({n: i.model, b: i.balance})));
+        if (lastModelsState !== currentState) {
+            lastModelsState = currentState;
+            lastData = items;
+            renderTreemap(items);
+            console.log("📊 Bubble map updated");
+        }
+    } catch (error) {
+        console.error("Error updating bubble map:", error);
     }
 }
+
+// Обновляем каждые 5 секунд
+setInterval(updateBubbleMap, 5000);
+
+// Первоначальная загрузка
+updateBubbleMap();
+
+// Перерисовываем при изменении размера окна
+window.addEventListener("resize", () => {
+    if (lastData.length > 0) {
+        renderTreemap(lastData);
+    }
+});
+
 function renderTreemap(items) {
     const container = document.getElementById("bubbleMap");
+    if (!container) return;
+    
     container.innerHTML = "";
     const W = container.clientWidth;
     const H = container.clientHeight;
 
-    // 🎨 Цвета и лого в стиле как на фото
     const MODEL_STYLES = {
         "GPT": {
             color: "#268383ff",
@@ -893,20 +885,3 @@ function renderTreemap(items) {
 
     layout(0, 0, W, H, items);
 }
-// Кэшируем последние полученные данные
-let lastData = [];
-
-ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
-    if (data.type === "bubble_map") {
-        lastData = data.data;
-        renderTreemap(lastData);
-    }
-};
-
-// Перерисовываем при изменении размера окна
-window.addEventListener("resize", () => {
-    if (lastData.length > 0) {
-        renderTreemap(lastData);
-    }
-});
