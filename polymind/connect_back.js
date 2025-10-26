@@ -1121,21 +1121,23 @@ function adjustBubbleMapHeight() {
             bubbleMap.style.maxHeight = `${finalHeight}px`;
             bubbleMap.style.flexShrink = '0';
             
-if (aiChat) {
-    aiChat.style.display = 'flex';
-    aiChat.style.flexDirection = 'column';
-    aiChat.style.height = 'auto';       
-    aiChat.style.minHeight = '50vh';   
-    aiChat.style.maxHeight = '90vh';   
-}
-
+            if (aiChat) {
+                aiChat.style.display = 'flex';
+                aiChat.style.flex = '1';
+                aiChat.style.minHeight = '0';
+                aiChat.style.maxHeight = 'none';
+                aiChat.style.flexDirection = 'column';
+                aiChat.style.overflow = 'hidden';
+            }
+            
 const aiChatWp = document.querySelector('.ai-chat__wp');
 if (aiChatWp) {
     aiChatWp.style.flex = '1';
     aiChatWp.style.overflowY = 'auto';
-    aiChatWp.style.minHeight = '40%'; 
+    aiChatWp.style.minHeight = '38%'; 
     aiChatWp.style.maxHeight = 'none';
 }
+
             
             const aiChatBottom = document.querySelector('.ai-chat__bottom');
             if (aiChatBottom) {
