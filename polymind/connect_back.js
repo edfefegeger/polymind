@@ -924,10 +924,9 @@ function createBlock(item, x, y, w, h) {
     div.style.top = `${y}px`;
     div.style.width = `${w}px`;
     div.style.height = `${h}px`;
-    div.style.borderRadius = "2px";
+    div.style.borderRadius = "4px";
     div.style.overflow = "hidden";
     div.style.display = "flex";
-    div.style.flexDirection = "column";
     div.style.justifyContent = "center";
     div.style.alignItems = "center";
     div.style.textAlign = "center";
@@ -938,27 +937,15 @@ function createBlock(item, x, y, w, h) {
     div.style.background = MODEL_STYLES[item.model]?.color || "#555";
     div.style.boxShadow = "inset 0 0 40px rgba(255,255,255,0.1)";
 
-    const minDimension = Math.min(w, h);
-    let nameFontSize = Math.max(10, Math.min(16, minDimension * 0.12));
-    let balFontSize = Math.max(8, Math.min(12, minDimension * 0.08));
-    let imgSize = Math.max(16, Math.min(40, minDimension * 0.25));
+    const minDim = Math.min(w, h);
+    const isTiny = minDim < 50;
+    const isNarrow = w < 80 && h > w;
+    const isWide = w > h * 2;
 
-    const name = document.createElement("div");
-    name.textContent = item.model;
-    name.style.fontSize = `${nameFontSize}px`;
-    name.style.marginBottom = "4px";
-    name.style.whiteSpace = "nowrap";
-    name.style.overflow = "hidden";
-    name.style.textOverflow = "ellipsis";
-    name.style.maxWidth = "90%";
-    name.style.lineHeight = "1.2";
 
-    const bal = document.createElement("div");
-    bal.textContent = `$${item.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    bal.style.fontSize = `${balFontSize}px`;
-    bal.style.opacity = "0.9";
-    bal.style.marginBottom = "4px";
-    bal.style.whiteSpace = "nowrap";
+    const nameFontSize = Math.max(8, Math.min(16, minDim * 0.18));
+    const balFontSize = Math.max(8, Math.min(14, minDim * 0.15));
+    const imgSize = Math.max(14, Math.min(40, minDim * 0.35));
 
     const img = document.createElement("img");
     img.src = MODEL_STYLES[item.model]?.logo || "";
@@ -968,24 +955,57 @@ function createBlock(item, x, y, w, h) {
     img.style.opacity = "0.9";
     img.style.flexShrink = "0";
 
-    if (minDimension < 60) {
+    const name = document.createElement("div");
+    name.textContent = item.model;
+    name.style.fontSize = `${nameFontSize}px`;
+    name.style.whiteSpace = "nowrap";
+    name.style.overflow = "hidden";
+    name.style.textOverflow = "ellipsis";
+    name.style.maxWidth = "100%";
+    name.style.lineHeight = "1.1";
+
+    const bal = document.createElement("div");
+    bal.textContent = `$${item.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    bal.style.fontSize = `${balFontSize}px`;
+    bal.style.opacity = "0.9";
+    bal.style.whiteSpace = "nowrap";
+
+
+    const textWrap = document.createElement("div");
+    textWrap.style.display = "flex";
+    textWrap.style.flexDirection = "column";
+    textWrap.style.alignItems = "center";
+    textWrap.style.justifyContent = "center";
+    textWrap.appendChild(name);
+    textWrap.appendChild(bal);
+
+
+    if (isTiny) {
 
         div.style.flexDirection = "row";
-        div.style.justifyContent = "space-between";
-        name.style.fontSize = `${Math.max(8, minDimension * 0.2)}px`;
-        bal.style.display = "none";
-    } else if (minDimension < 80) {
+        div.style.gap = "3px";
+        name.style.fontSize = `${Math.max(7, minDim * 0.22)}px`;
+        bal.style.fontSize = `${Math.max(7, minDim * 0.18)}px`;
+        textWrap.style.flexDirection = "row";
+        textWrap.style.gap = "3px";
+    } else if (isWide) {
+
+        div.style.flexDirection = "row";
+        div.style.gap = "6px";
+        textWrap.style.alignItems = "flex-start";
+        name.style.textAlign = "left";
+        bal.style.textAlign = "left";
+    } else if (isNarrow) {
         div.style.flexDirection = "column";
-        bal.style.display = "none";
+        div.style.gap = "2px";
     } else {
 
         div.style.flexDirection = "column";
-        bal.style.display = "block";
+        div.style.gap = "4px";
     }
 
-    div.appendChild(name);
-    div.appendChild(bal);
     div.appendChild(img);
+    div.appendChild(textWrap);
 
     div.addEventListener("mouseenter", () => {
         div.style.transform = "scale(1.03)";
@@ -1217,15 +1237,17 @@ function adjustBubbleMapHeight() {
             homeLeft.style.flexDirection = '';
         }
         
-        const aiChat = document.querySelector('.ai-chat');
-        if (aiChat) {
-            aiChat.style.display = '';
-            aiChat.style.flex = '';
-            aiChat.style.minHeight = '';
-            aiChat.style.maxHeight = '';
-            aiChat.style.flexDirection = '';
-            aiChat.style.overflow = '';
-        }
+const aiChat = document.querySelector('.ai-chat');
+if (aiChat && !aiChat.dataset.fixedHeight) { 
+
+    aiChat.dataset.fixedHeight = aiChat.offsetHeight; 
+    aiChat.style.height = `${aiChat.offsetHeight}px`;
+    aiChat.style.maxHeight = `${aiChat.offsetHeight}px`;
+    aiChat.style.minHeight = `${aiChat.offsetHeight}px`;
+    aiChat.style.flex = 'none';
+    aiChat.style.overflow = 'hidden';
+}
+
         
         const aiChatWp = document.querySelector('.ai-chat__wp');
         if (aiChatWp) {
