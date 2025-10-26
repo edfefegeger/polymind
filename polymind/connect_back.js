@@ -840,9 +840,7 @@ async function fetchModels() {
 
     updateBubbleMapFromModels(models);
 }
-// -------------------------
-// Bubble Map HTTP Polling (вместо WebSocket)
-// -------------------------
+
 let lastData = [];
 let lastModelsState = "";
 
@@ -857,7 +855,7 @@ async function updateBubbleMap() {
             delta: m.balance - 10000
         }));
         
-        // Проверяем, изменились ли данные
+
         const currentState = JSON.stringify(items.map(i => ({n: i.model, b: i.balance})));
         if (lastModelsState !== currentState) {
             lastModelsState = currentState;
@@ -870,13 +868,11 @@ async function updateBubbleMap() {
     }
 }
 
-// Обновляем каждые 5 секунд
 setInterval(updateBubbleMap, 5000);
 
-// Первоначальная загрузка
 updateBubbleMap();
 
-// Перерисовываем при изменении размера окна
+
 window.addEventListener("resize", () => {
     if (lastData.length > 0) {
         renderTreemap(lastData);
@@ -890,6 +886,9 @@ function renderTreemap(items) {
     container.innerHTML = "";
     const W = container.clientWidth;
     const H = container.clientHeight;
+    
+
+    const isMobile = window.innerWidth <= 768;
 
     const MODEL_STYLES = {
         "GPT": {
@@ -939,23 +938,53 @@ function renderTreemap(items) {
         div.style.background = MODEL_STYLES[item.model]?.color || "#555";
         div.style.boxShadow = "inset 0 0 40px rgba(255,255,255,0.1)";
 
+        const minDimension = Math.min(w, h);
+        let nameFontSize, balFontSize, imgSize;
+        
+        if (isMobile) {
+
+            nameFontSize = Math.max(10, Math.min(16, minDimension * 0.12));
+            balFontSize = Math.max(8, Math.min(12, minDimension * 0.08));
+            imgSize = Math.max(20, Math.min(35, minDimension * 0.2));
+        } else {
+            nameFontSize = Math.max(12, Math.min(17, minDimension * 0.1));
+            balFontSize = Math.max(10, Math.min(12, minDimension * 0.07));
+            imgSize = Math.max(25, Math.min(40, minDimension * 0.15));
+        }
+
         const name = document.createElement("div");
         name.textContent = item.model;
-        name.style.fontSize = "17px";
-        name.style.marginBottom = "6px";
+        name.style.fontSize = `${nameFontSize}px`;
+        name.style.marginBottom = "4px";
+        name.style.whiteSpace = "nowrap";
+        name.style.overflow = "hidden";
+        name.style.textOverflow = "ellipsis";
+        name.style.maxWidth = "90%";
+        name.style.lineHeight = "1.2";
 
         const bal = document.createElement("div");
         bal.textContent = `$${item.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        bal.style.fontSize = "12px";
+        bal.style.fontSize = `${balFontSize}px`;
         bal.style.opacity = "0.9";
-        bal.style.marginBottom = "10px";
+        bal.style.marginBottom = `${isMobile ? '6px' : '8px'}`;
+        bal.style.whiteSpace = "nowrap";
 
         const img = document.createElement("img");
         img.src = MODEL_STYLES[item.model]?.logo || "";
         img.alt = item.model;
-        img.style.width = "30px";
-        img.style.height = "30px";
+        img.style.width = `${imgSize}px`;
+        img.style.height = `${imgSize}px`;
         img.style.opacity = "0.9";
+        img.style.flexShrink = "0";
+
+        if (minDimension < 60) {
+            bal.style.display = "none";
+            img.style.display = "none";
+            nameFontSize = Math.max(8, minDimension * 0.15);
+            name.style.fontSize = `${nameFontSize}px`;
+        } else if (minDimension < 80) {
+            img.style.display = "none";
+        }
 
         div.appendChild(name);
         div.appendChild(bal);
@@ -973,7 +1002,7 @@ function renderTreemap(items) {
         container.appendChild(div);
     }
 
-    function layout(x, y, w, h, data) {
+    function layout(x, y, w, h, data, depth = 0) {
         if (data.length === 0) return;
 
         if (data.length === 1) {
@@ -981,12 +1010,36 @@ function renderTreemap(items) {
             return;
         }
 
-        const horizontal = Math.random() > 0.5;
+        const aspectRatio = w / h;
 
-        let minSplit = Math.max(1, Math.floor(0.3 * data.length));
-        let maxSplit = Math.min(data.length - 1, Math.floor(0.7 * data.length));
-        if (maxSplit <= minSplit) maxSplit = minSplit + 1;
-        const splitIndex = Math.floor(minSplit + Math.random() * (maxSplit - minSplit));
+        const seed = (x * 7 + y * 11 + depth * 13) % 100;
+        
+        let horizontal;
+        
+        if (aspectRatio > 2.5) {
+
+            horizontal = true;
+        } else if (aspectRatio < 0.4) {
+
+            horizontal = false;
+        } else {
+
+            const depthFactor = (depth % 2 === 0) ? 0.3 : 0.7;
+            const randomFactor = seed / 100;
+            const aspectFactor = aspectRatio > 1 ? 0.6 : 0.4;
+            
+
+            const decision = (depthFactor * 0.3 + randomFactor * 0.4 + aspectFactor * 0.3);
+            horizontal = decision > 0.5;
+        }
+
+        const minSplit = Math.max(1, Math.floor(0.25 * data.length));
+        const maxSplit = Math.min(data.length - 1, Math.floor(0.75 * data.length));
+
+        const splitRange = maxSplit - minSplit;
+        const splitIndex = splitRange > 0 ? 
+                          minSplit + ((seed * (depth + 1)) % (splitRange + 1)) : 
+                          minSplit;
 
         const first = data.slice(0, splitIndex);
         const rest = data.slice(splitIndex);
@@ -995,16 +1048,283 @@ function renderTreemap(items) {
         const restTotal = rest.reduce((s, i) => s + i.balance, 0);
         const total = firstTotal + restTotal;
 
+        let ratio = firstTotal / total;
+        const variation = ((seed % 20) - 10) / 200; 
+        ratio = Math.max(0.2, Math.min(0.8, ratio + variation));
+
+        const GAP = isMobile ? 1 : 2;
+
         if (horizontal) {
-            const w1 = w * (firstTotal / total);
-            layout(x, y, w1, h, first);
-            layout(x + w1, y, w - w1, h, rest);
+            const w1 = Math.floor(w * ratio);
+            layout(x, y, w1 - GAP, h, first, depth + 1);
+            layout(x + w1, y, w - w1, h, rest, depth + 1);
         } else {
-            const h1 = h * (firstTotal / total);
-            layout(x, y, w, h1, first);
-            layout(x, y + h1, w, h - h1, rest);
+            const h1 = Math.floor(h * ratio);
+            layout(x, y, w, h1 - GAP, first, depth + 1);
+            layout(x, y + h1, w, h - h1, rest, depth + 1);
         }
     }
 
     layout(0, 0, W, H, items);
 }
+
+
+function adjustBubbleMapHeight() {
+    const bubbleMap = document.getElementById('bubbleMap');
+    if (!bubbleMap) return;
+    
+    if (window.innerWidth <= 768) {
+        const viewportHeight = window.innerHeight;
+        const header = document.querySelector('.header');
+        const home = document.querySelector('.home');
+        const aiChat = document.querySelector('.ai-chat');
+        const rightHomeTabs = document.querySelector('.right-home__tabs');
+        
+        const headerHeight = header?.offsetHeight || 0;
+        const tabsHeight = rightHomeTabs?.offsetHeight || 60; 
+        
+
+        const isMainPage = home && home.classList.contains('_hide');
+        
+        if (isMainPage) {
+
+            const maxBubbleHeight = viewportHeight - headerHeight - tabsHeight - 30;
+            const finalHeight = Math.max(250, maxBubbleHeight);
+            
+            bubbleMap.style.height = `${finalHeight}px`;
+            bubbleMap.style.minHeight = `${finalHeight}px`;
+            bubbleMap.style.maxHeight = `${finalHeight}px`;
+            bubbleMap.style.flexShrink = '0';
+            
+
+            if (aiChat) {
+                aiChat.style.display = 'none';
+            }
+            
+
+            if (rightHomeTabs) {
+                rightHomeTabs.style.display = 'grid';
+                rightHomeTabs.style.flexShrink = '0';
+            }
+            
+        } else {
+
+            const aiChatTopHeight = 50;
+            const aiChatBottomHeight = 60;
+            const minAiChatHeight = aiChatTopHeight + aiChatBottomHeight + 100;
+            
+            const maxBubbleHeight = viewportHeight - headerHeight - tabsHeight - minAiChatHeight - 20;
+            const finalHeight = Math.max(180, maxBubbleHeight);
+            
+            bubbleMap.style.height = `${finalHeight}px`;
+            bubbleMap.style.minHeight = `${finalHeight}px`;
+            bubbleMap.style.maxHeight = `${finalHeight}px`;
+            bubbleMap.style.flexShrink = '0';
+            
+            if (aiChat) {
+                aiChat.style.display = 'flex';
+                aiChat.style.flex = '1';
+                aiChat.style.minHeight = '0';
+                aiChat.style.maxHeight = 'none';
+                aiChat.style.flexDirection = 'column';
+                aiChat.style.overflow = 'hidden';
+            }
+            
+            const aiChatWp = document.querySelector('.ai-chat__wp');
+            if (aiChatWp) {
+                aiChatWp.style.flex = '1';
+                aiChatWp.style.overflowY = 'auto';
+                aiChatWp.style.minHeight = '0';
+            }
+            
+            const aiChatBottom = document.querySelector('.ai-chat__bottom');
+            if (aiChatBottom) {
+                aiChatBottom.style.flexShrink = '0';
+                aiChatBottom.style.marginBottom = '0';
+                aiChatBottom.style.paddingBottom = '10px';
+            }
+            
+ 
+            if (rightHomeTabs) {
+                rightHomeTabs.style.display = 'grid';
+                rightHomeTabs.style.flexShrink = '0';
+            }
+        }
+        
+
+        document.body.style.overflow = 'hidden';
+        document.body.style.height = '100vh';
+        
+        const wrapper = document.querySelector('.wrapper');
+        if (wrapper) {
+            wrapper.style.height = '100vh';
+            wrapper.style.overflow = 'hidden';
+        }
+        
+        if (home) {
+            home.style.height = '100vh';
+            home.style.maxHeight = '100vh';
+            home.style.overflow = 'hidden';
+            home.style.display = 'flex';
+            home.style.flexDirection = 'column';
+        }
+        
+        const homeLeft = document.querySelector('.home__left');
+        if (homeLeft) {
+            homeLeft.style.height = `calc(100vh - ${headerHeight}px)`;
+            homeLeft.style.maxHeight = `calc(100vh - ${headerHeight}px)`;
+            homeLeft.style.overflow = 'hidden';
+            homeLeft.style.display = 'flex';
+            homeLeft.style.flexDirection = 'column';
+        }
+        
+        const rightHome = document.querySelector('.right-home');
+        if (rightHome) {
+            rightHome.style.display = 'flex';
+            rightHome.style.flexDirection = 'column';
+            rightHome.style.maxHeight = '50vh';
+            rightHome.style.overflowY = 'auto';
+            rightHome.style.flexShrink = '0';
+        }
+        
+    } else {
+
+        bubbleMap.style.height = '50%';
+        bubbleMap.style.minHeight = '400px';
+        bubbleMap.style.maxHeight = '';
+        bubbleMap.style.flexShrink = '';
+        
+        document.body.style.overflow = '';
+        document.body.style.height = '';
+        
+        const wrapper = document.querySelector('.wrapper');
+        if (wrapper) {
+            wrapper.style.height = '';
+            wrapper.style.overflow = '';
+        }
+        
+        const home = document.querySelector('.home');
+        if (home) {
+            home.style.height = '';
+            home.style.maxHeight = '';
+            home.style.overflow = '';
+            home.style.display = '';
+            home.style.flexDirection = '';
+        }
+        
+        const homeLeft = document.querySelector('.home__left');
+        if (homeLeft) {
+            homeLeft.style.height = '';
+            homeLeft.style.maxHeight = '';
+            homeLeft.style.overflow = '';
+            homeLeft.style.display = '';
+            homeLeft.style.flexDirection = '';
+        }
+        
+        const aiChat = document.querySelector('.ai-chat');
+        if (aiChat) {
+            aiChat.style.display = '';
+            aiChat.style.flex = '';
+            aiChat.style.minHeight = '';
+            aiChat.style.maxHeight = '';
+            aiChat.style.flexDirection = '';
+            aiChat.style.overflow = '';
+        }
+        
+        const aiChatWp = document.querySelector('.ai-chat__wp');
+        if (aiChatWp) {
+            aiChatWp.style.flex = '';
+            aiChatWp.style.overflowY = '';
+            aiChatWp.style.minHeight = '';
+        }
+        
+        const aiChatBottom = document.querySelector('.ai-chat__bottom');
+        if (aiChatBottom) {
+            aiChatBottom.style.flexShrink = '';
+            aiChatBottom.style.marginBottom = '';
+            aiChatBottom.style.paddingBottom = '';
+        }
+        
+        const rightHome = document.querySelector('.right-home');
+        if (rightHome) {
+            rightHome.style.display = '';
+            rightHome.style.flexDirection = '';
+            rightHome.style.maxHeight = '';
+            rightHome.style.overflowY = '';
+            rightHome.style.flexShrink = '';
+        }
+        
+        const rightHomeTabs = document.querySelector('.right-home__tabs');
+        if (rightHomeTabs) {
+            rightHomeTabs.style.display = '';
+            rightHomeTabs.style.flexShrink = '';
+        }
+    }
+    
+    if (typeof lastData !== 'undefined' && lastData.length > 0) {
+        renderTreemap(lastData);
+    }
+}
+
+
+window.addEventListener('resize', adjustBubbleMapHeight);
+window.addEventListener('orientationchange', adjustBubbleMapHeight);
+
+document.addEventListener('DOMContentLoaded', () => {
+    adjustBubbleMapHeight();
+    setTimeout(adjustBubbleMapHeight, 100);
+    setTimeout(adjustBubbleMapHeight, 300);
+    setTimeout(adjustBubbleMapHeight, 500);
+    setTimeout(adjustBubbleMapHeight, 1000);
+});
+
+
+if (window.ResizeObserver) {
+    const observer = new ResizeObserver(() => {
+        if (window.innerWidth <= 768) {
+            adjustBubbleMapHeight();
+        }
+    });
+    
+    const rightHome = document.querySelector('.right-home');
+    const header = document.querySelector('.header');
+    
+    if (rightHome) observer.observe(rightHome);
+    if (header) observer.observe(header);
+}
+
+
+document.addEventListener('click', (e) => {
+    const tab = e.target.closest('.right-home__tabs div');
+    if (tab && window.innerWidth <= 768) {
+        setTimeout(() => {
+            adjustBubbleMapHeight();
+        }, 50);
+    }
+});
+
+
+if (window.MutationObserver) {
+    const homeObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                if (window.innerWidth <= 768) {
+                    setTimeout(() => {
+                        adjustBubbleMapHeight();
+                    }, 50);
+                }
+            }
+        });
+    });
+    
+    const home = document.querySelector('.home');
+    if (home) {
+        homeObserver.observe(home, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    }
+}
+
+// Финальный вызов после полной загрузки
+setTimeout(adjustBubbleMapHeight, 1500);
