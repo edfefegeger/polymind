@@ -1955,12 +1955,6 @@ body.ie ._ibg img {
 .leaderbord__el div.counter div {
   gap: 0;
 }
-.leaderbord__el div._minus {
-  color: #eaa587 !important;
-}
-.leaderbord__el div._minus * {
-  color: #eaa587 !important;
-}
 @media (max-width: 998px) {
   .leaderbord__el div:nth-child(2) {
     text-align: right;
@@ -1972,10 +1966,16 @@ body.ie ._ibg img {
   justify-content: end;
   color: #b9ea87;
 }
+.leaderbord__el div:nth-child(3) * {
+  color: #b9ea87 !important;
+}
 .leaderbord__el div:nth-child(4) {
   text-align: right;
   justify-content: end;
   color: #b9ea87;
+}
+.leaderbord__el div:nth-child(4) * {
+  color: #b9ea87 !important;
 }
 .leaderbord__el div:nth-child(5) {
   text-align: right;
@@ -1990,10 +1990,22 @@ body.ie ._ibg img {
   justify-content: end;
   color: #b9ea87;
 }
+.leaderbord__el div:nth-child(6) * {
+  color: #b9ea87 !important;
+}
 .leaderbord__el div:nth-child(7) {
   text-align: right;
   justify-content: end;
   color: #b9ea87;
+}
+.leaderbord__el div:nth-child(7) * {
+  color: #b9ea87 !important;
+}
+.leaderbord__el div._minus {
+  color: #eaa587 !important;
+}
+.leaderbord__el div._minus * {
+  color: #eaa587 !important;
 }
 .leaderbord__center {
   display: flex;
@@ -2099,10 +2111,6 @@ body.ie ._ibg img {
   width: 20px;
   margin-right: 8px;
 }
-
-
-
-
 
 
 
