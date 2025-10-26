@@ -917,90 +917,88 @@ function renderTreemap(items) {
         }
     };
 
-    function createBlock(item, x, y, w, h) {
-        const div = document.createElement("div");
-        div.style.position = "absolute";
-        div.style.left = `${x}px`;
-        div.style.top = `${y}px`;
-        div.style.width = `${w}px`;
-        div.style.height = `${h}px`;
-        div.style.borderRadius = "2px";
-        div.style.overflow = "hidden";
-        div.style.display = "flex";
+function createBlock(item, x, y, w, h) {
+    const div = document.createElement("div");
+    div.style.position = "absolute";
+    div.style.left = `${x}px`;
+    div.style.top = `${y}px`;
+    div.style.width = `${w}px`;
+    div.style.height = `${h}px`;
+    div.style.borderRadius = "2px";
+    div.style.overflow = "hidden";
+    div.style.display = "flex";
+    div.style.flexDirection = "column";
+    div.style.justifyContent = "center";
+    div.style.alignItems = "center";
+    div.style.textAlign = "center";
+    div.style.fontFamily = "'IBM Plex Sans', 'Inter', sans-serif";
+    div.style.fontWeight = "600";
+    div.style.color = "rgba(255,255,255,0.95)";
+    div.style.transition = "transform 0.3s ease, box-shadow 0.3s ease";
+    div.style.background = MODEL_STYLES[item.model]?.color || "#555";
+    div.style.boxShadow = "inset 0 0 40px rgba(255,255,255,0.1)";
+
+    const minDimension = Math.min(w, h);
+    let nameFontSize = Math.max(10, Math.min(16, minDimension * 0.12));
+    let balFontSize = Math.max(8, Math.min(12, minDimension * 0.08));
+    let imgSize = Math.max(16, Math.min(40, minDimension * 0.25));
+
+    const name = document.createElement("div");
+    name.textContent = item.model;
+    name.style.fontSize = `${nameFontSize}px`;
+    name.style.marginBottom = "4px";
+    name.style.whiteSpace = "nowrap";
+    name.style.overflow = "hidden";
+    name.style.textOverflow = "ellipsis";
+    name.style.maxWidth = "90%";
+    name.style.lineHeight = "1.2";
+
+    const bal = document.createElement("div");
+    bal.textContent = `$${item.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    bal.style.fontSize = `${balFontSize}px`;
+    bal.style.opacity = "0.9";
+    bal.style.marginBottom = "4px";
+    bal.style.whiteSpace = "nowrap";
+
+    const img = document.createElement("img");
+    img.src = MODEL_STYLES[item.model]?.logo || "";
+    img.alt = item.model;
+    img.style.width = `${imgSize}px`;
+    img.style.height = `${imgSize}px`;
+    img.style.opacity = "0.9";
+    img.style.flexShrink = "0";
+
+    if (minDimension < 60) {
+
+        div.style.flexDirection = "row";
+        div.style.justifyContent = "space-between";
+        name.style.fontSize = `${Math.max(8, minDimension * 0.2)}px`;
+        bal.style.display = "none";
+    } else if (minDimension < 80) {
         div.style.flexDirection = "column";
-        div.style.justifyContent = "center";
-        div.style.alignItems = "center";
-        div.style.textAlign = "center";
-        div.style.fontFamily = "'IBM Plex Sans', 'Inter', sans-serif";
-        div.style.fontWeight = "600";
-        div.style.color = "rgba(255,255,255,0.95)";
-        div.style.transition = "transform 0.3s ease, box-shadow 0.3s ease";
-        div.style.background = MODEL_STYLES[item.model]?.color || "#555";
-        div.style.boxShadow = "inset 0 0 40px rgba(255,255,255,0.1)";
+        bal.style.display = "none";
+    } else {
 
-        const minDimension = Math.min(w, h);
-        let nameFontSize, balFontSize, imgSize;
-        
-        if (isMobile) {
-
-            nameFontSize = Math.max(10, Math.min(16, minDimension * 0.12));
-            balFontSize = Math.max(8, Math.min(12, minDimension * 0.08));
-            imgSize = Math.max(20, Math.min(35, minDimension * 0.2));
-        } else {
-            nameFontSize = Math.max(12, Math.min(17, minDimension * 0.1));
-            balFontSize = Math.max(10, Math.min(12, minDimension * 0.07));
-            imgSize = Math.max(25, Math.min(40, minDimension * 0.15));
-        }
-
-        const name = document.createElement("div");
-        name.textContent = item.model;
-        name.style.fontSize = `${nameFontSize}px`;
-        name.style.marginBottom = "4px";
-        name.style.whiteSpace = "nowrap";
-        name.style.overflow = "hidden";
-        name.style.textOverflow = "ellipsis";
-        name.style.maxWidth = "90%";
-        name.style.lineHeight = "1.2";
-
-        const bal = document.createElement("div");
-        bal.textContent = `$${item.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        bal.style.fontSize = `${balFontSize}px`;
-        bal.style.opacity = "0.9";
-        bal.style.marginBottom = `${isMobile ? '6px' : '8px'}`;
-        bal.style.whiteSpace = "nowrap";
-
-        const img = document.createElement("img");
-        img.src = MODEL_STYLES[item.model]?.logo || "";
-        img.alt = item.model;
-        img.style.width = `${imgSize}px`;
-        img.style.height = `${imgSize}px`;
-        img.style.opacity = "0.9";
-        img.style.flexShrink = "0";
-
-        if (minDimension < 60) {
-            bal.style.display = "none";
-            img.style.display = "none";
-            nameFontSize = Math.max(8, minDimension * 0.15);
-            name.style.fontSize = `${nameFontSize}px`;
-        } else if (minDimension < 80) {
-            img.style.display = "none";
-        }
-
-        div.appendChild(name);
-        div.appendChild(bal);
-        div.appendChild(img);
-
-        div.addEventListener("mouseenter", () => {
-            div.style.transform = "scale(1.03)";
-            div.style.boxShadow = "0 0 25px rgba(255,255,255,0.25)";
-        });
-        div.addEventListener("mouseleave", () => {
-            div.style.transform = "scale(1)";
-            div.style.boxShadow = "inset 0 0 40px rgba(255,255,255,0.1)";
-        });
-
-        container.appendChild(div);
+        div.style.flexDirection = "column";
+        bal.style.display = "block";
     }
+
+    div.appendChild(name);
+    div.appendChild(bal);
+    div.appendChild(img);
+
+    div.addEventListener("mouseenter", () => {
+        div.style.transform = "scale(1.03)";
+        div.style.boxShadow = "0 0 25px rgba(255,255,255,0.25)";
+    });
+    div.addEventListener("mouseleave", () => {
+        div.style.transform = "scale(1)";
+        div.style.boxShadow = "inset 0 0 40px rgba(255,255,255,0.1)";
+    });
+
+    container.appendChild(div);
+}
+
 
     function layout(x, y, w, h, data, depth = 0) {
         if (data.length === 0) return;
@@ -1081,8 +1079,7 @@ function adjustBubbleMapHeight() {
         const rightHomeTabs = document.querySelector('.right-home__tabs');
         
         const headerHeight = header?.offsetHeight || 0;
-        const tabsHeight = rightHomeTabs?.offsetHeight || 60; 
-        
+        const tabsHeight = rightHomeTabs?.offsetHeight || 60;
 
         const isMainPage = home && home.classList.contains('_hide');
         
@@ -1112,7 +1109,7 @@ function adjustBubbleMapHeight() {
             const aiChatTopHeight = 50;
             const aiChatBottomHeight = 60;
             const minAiChatHeight = aiChatTopHeight + aiChatBottomHeight + 100;
-            
+
             const maxBubbleHeight = viewportHeight - headerHeight - tabsHeight - minAiChatHeight - 20;
             const finalHeight = Math.max(180, maxBubbleHeight);
             
@@ -1120,7 +1117,7 @@ function adjustBubbleMapHeight() {
             bubbleMap.style.minHeight = `${finalHeight}px`;
             bubbleMap.style.maxHeight = `${finalHeight}px`;
             bubbleMap.style.flexShrink = '0';
-            
+
             if (aiChat) {
                 aiChat.style.display = 'flex';
                 aiChat.style.flex = '1';
@@ -1130,14 +1127,12 @@ function adjustBubbleMapHeight() {
                 aiChat.style.overflow = 'hidden';
             }
             
-const aiChatWp = document.querySelector('.ai-chat__wp');
-if (aiChatWp) {
-    aiChatWp.style.flex = '1';
-    aiChatWp.style.overflowY = 'auto';
-    aiChatWp.style.minHeight = '38%'; 
-    aiChatWp.style.maxHeight = 'none';
-}
-
+            const aiChatWp = document.querySelector('.ai-chat__wp');
+            if (aiChatWp) {
+                aiChatWp.style.flex = '1';
+                aiChatWp.style.overflowY = 'auto';
+                aiChatWp.style.minHeight = '0';
+            }
             
             const aiChatBottom = document.querySelector('.ai-chat__bottom');
             if (aiChatBottom) {
@@ -1145,8 +1140,7 @@ if (aiChatWp) {
                 aiChatBottom.style.marginBottom = '0';
                 aiChatBottom.style.paddingBottom = '10px';
             }
-            
- 
+
             if (rightHomeTabs) {
                 rightHomeTabs.style.display = 'grid';
                 rightHomeTabs.style.flexShrink = '0';
@@ -1299,6 +1293,7 @@ if (window.ResizeObserver) {
 document.addEventListener('click', (e) => {
     const tab = e.target.closest('.right-home__tabs div');
     if (tab && window.innerWidth <= 768) {
+
         setTimeout(() => {
             adjustBubbleMapHeight();
         }, 50);
@@ -1328,5 +1323,5 @@ if (window.MutationObserver) {
     }
 }
 
-// Финальный вызов после полной загрузки
+
 setTimeout(adjustBubbleMapHeight, 1500);
