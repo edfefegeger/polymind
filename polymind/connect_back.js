@@ -875,6 +875,8 @@ function initAIChat() {
             if (span) selected.appendChild(span.cloneNode(true));
             
             list.classList.remove('_active');
+
+            chatWrap.innerHTML = '';
         });
     });
     
