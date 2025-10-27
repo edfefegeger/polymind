@@ -43,6 +43,234 @@ const MODEL_CHART_CLASSES = {
     "Qwen Max": "leaderbord__element_quen"
 };
 
+
+// Language Switcher System
+
+
+const TRANSLATIONS = {
+    en: {
+        markets: "Markets",
+        leaderboard: "Leaderboard",
+        resources: "Resources",
+        community: "Community",
+        askAI: "Ask the AI why it made this bet",
+        availableBalances: "Available balances",
+        rank: "Rank",
+        model: "Model",
+        returnPercent: "Return %",
+        totalPnL: "Total P&L",
+        winRate: "Win Rate",
+        biggestWin: "Biggest Win",
+        biggestLoss: "Biggest Loss",
+        winningModel: "WINNING MODEL",
+        bet: "Bet",
+        amount: "Amount",
+        typeMessage: "Type your message...",
+        send: "Send",
+        eventEnded: "The event has ended",
+        checkResults: "please check the \"Result\" tab",
+        bets: "Bets",
+        results: "Results"
+    },
+    ch: {
+        markets: "市场",
+        leaderboard: "排名",
+        resources: "资源",
+        community: "社区",
+        askAI: "问AI为什么这样下注",
+        availableBalances: "可用余额",
+        rank: "排名",
+        model: "模型",
+        returnPercent: "收益率",
+        totalPnL: "总盈亏",
+        winRate: "胜率",
+        biggestWin: "最大赢利",
+        biggestLoss: "最大亏损",
+        winningModel: "胜出模型",
+        bet: "下注",
+        amount: "金额",
+        typeMessage: "输入您的消息...",
+        send: "发送",
+        eventEnded: "活动已结束",
+        checkResults: "请查看\"结果\"标签",
+        bets: "投注",
+        results: "结果"
+    }
+};
+
+let currentLanguage = 'en';
+
+const savedLang = localStorage.getItem('selectedLanguage');
+if (savedLang === 'ch' || savedLang === 'en') {
+    currentLanguage = savedLang;
+}
+
+function parseEventDescription(description, lang) {
+    if (!description) return '';
+    
+    if (description.includes('|')) {
+        const parts = description.split('|').map(p => p.trim());
+        return lang === 'en' ? parts[0] : (parts[1] || parts[0]);
+    }
+    
+    return description;
+}
+
+function updatePageTexts() {
+    const t = TRANSLATIONS[currentLanguage];
+    
+    const marketLink = document.querySelector('.header__change a[href="index.html"]');
+    if (marketLink) marketLink.textContent = t.markets;
+    
+    const leaderboardLink = document.querySelector('.header__change a[href="leaderbord.html"]');
+    if (leaderboardLink) leaderboardLink.textContent = t.leaderboard;
+    
+    const resourcesSpan = document.querySelector('.header__links > div:nth-child(1) > span');
+    if (resourcesSpan) {
+        resourcesSpan.childNodes[0].textContent = t.resources;
+    }
+    
+    const communitySpan = document.querySelector('.header__links > div:nth-child(2) > span');
+    if (communitySpan) {
+        communitySpan.childNodes[0].textContent = t.community;
+    }
+    
+    const headerName = document.querySelector('.header__name');
+    if (headerName) headerName.textContent = t.availableBalances;
+    
+    const aiChatTop = document.querySelector('.ai-chat__top span');
+    if (aiChatTop) aiChatTop.textContent = t.askAI;
+    
+    const chatInput = document.querySelector('.ai-chat__bottom input');
+    if (chatInput) chatInput.placeholder = t.typeMessage;
+    
+    const sendButton = document.querySelector('.ai-chat__bottom button');
+    if (sendButton) {
+        const svg = sendButton.querySelector('svg');
+        sendButton.textContent = t.send + ' ';
+        if (svg) sendButton.appendChild(svg);
+    }
+    
+    const tabBets = document.querySelector('.right-home__tabs div[data-click="Bets"]');
+    if (tabBets) tabBets.textContent = t.bets;
+    
+    const tabResults = document.querySelector('.right-home__tabs div[data-click="Results"]');
+    if (tabResults) tabResults.textContent = t.results;
+
+    document.querySelectorAll('.right-home__blur span').forEach(span => {
+        span.textContent = t.eventEnded;
+    });
+    
+    document.querySelectorAll('.right-home__blur p').forEach(p => {
+        p.textContent = t.checkResults;
+    });
+    
+    document.querySelectorAll('.right-home__top-info').forEach(topInfo => {
+        const divs = topInfo.querySelectorAll('div');
+        if (divs.length >= 3) {
+            divs[0].textContent = t.model;
+            divs[1].textContent = t.bet;
+            divs[2].textContent = t.amount;
+        }
+    });
+    
+    const leaderboardHeaders = document.querySelectorAll('.leaderbord__top > div:first-child > div');
+    if (leaderboardHeaders.length >= 7) {
+        leaderboardHeaders[0].textContent = t.rank;
+        leaderboardHeaders[1].textContent = t.model;
+        leaderboardHeaders[2].textContent = t.returnPercent;
+        leaderboardHeaders[3].textContent = t.totalPnL;
+        leaderboardHeaders[4].textContent = t.winRate;
+        leaderboardHeaders[5].textContent = t.biggestWin;
+        leaderboardHeaders[6].textContent = t.biggestLoss;
+    }
+    
+    const winningModelText = document.querySelector('.leaderbord__bottom');
+    if (winningModelText) {
+        const img = winningModelText.querySelector('img');
+        const div = winningModelText.querySelector('div');
+        
+        const currentText = winningModelText.textContent || '';
+        const modelNameMatch = currentText.match(/\s+(GPT|Claude|Gemini|Grok|DeepSeek|Qwen)\s+/);
+        const modelName = modelNameMatch ? modelNameMatch[1] : '';
+        
+        winningModelText.textContent = '';
+        if (img) winningModelText.appendChild(img);
+        
+        const textNode = document.createTextNode(` ${t.winningModel} ${modelName} `);
+        winningModelText.appendChild(textNode);
+        
+        if (div) winningModelText.appendChild(div);
+    }
+}
+
+function updateEventsWithLanguage() {
+
+    document.querySelectorAll('.right-home__wp._bets .right-home__element').forEach(el => {
+        const topDiv = el.querySelector('.right-home__top');
+        if (!topDiv) return;
+        
+        if (!el.dataset.originalDescription) {
+            el.dataset.originalDescription = topDiv.textContent;
+        }
+        
+        topDiv.textContent = parseEventDescription(el.dataset.originalDescription, currentLanguage);
+    });
+    
+    document.querySelectorAll('.right-home__wp._results .right-home__element').forEach(el => {
+        const topDiv = el.querySelector('.right-home__top');
+        if (!topDiv) return;
+        
+        if (!el.dataset.originalDescription) {
+            el.dataset.originalDescription = topDiv.textContent;
+        }
+        
+        topDiv.textContent = parseEventDescription(el.dataset.originalDescription, currentLanguage);
+    });
+}
+
+function initLanguageSwitcher() {
+    const langInputs = document.querySelectorAll('input[name="lang"]');
+    
+    const savedLang = localStorage.getItem('selectedLanguage');
+    if (savedLang) {
+        currentLanguage = savedLang;
+        const input = document.getElementById(savedLang === 'en' ? 'en' : 'ch');
+        if (input) input.checked = true;
+    }
+    
+    langInputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+            const newLang = e.target.id === 'en' ? 'en' : 'ch';
+            
+            if (newLang === currentLanguage) return;
+            
+            currentLanguage = newLang;
+            localStorage.setItem('selectedLanguage', currentLanguage);
+            
+
+            updatePageTexts();
+            updateEventsWithLanguage();
+            
+            console.log(`🌐 Language switched to: ${currentLanguage}`);
+        });
+    });
+    
+
+    setTimeout(() => {
+        updatePageTexts();
+        updateEventsWithLanguage();
+    }, 500);
+}
+
+window.parseEventDescription = parseEventDescription;
+window.getCurrentLanguage = () => currentLanguage;
+window.TRANSLATIONS = TRANSLATIONS;
+window.currentLanguage = currentLanguage;
+
+
+
+
 function updateCounters() {
     const counters = document.querySelectorAll('.counter');
     counters.forEach(counter => {
@@ -103,21 +331,18 @@ function updateTimers() {
         const timerId = timerEl.getAttribute('data-event-id');
         const eventStatus = timerEl.getAttribute('data-event-status');
         const span = timerEl.querySelector('span');
-        
-        // Пропускаем завершенные события
+
         if (eventStatus === 'finished') {
             if (span) span.textContent = '0:00';
             return;
         }
-        
-        // Проверяем, не запущен ли уже таймер для этого события
+
         if (timerEl.dataset.timerRunning === 'true') {
             return;
         }
         
         timerEl.dataset.timerRunning = 'true';
 
-        // Получаем оставшееся время в секундах из атрибута
         let remainingSeconds = parseInt(timerEl.getAttribute('data-timer-seconds'));
         
         if (isNaN(remainingSeconds) || remainingSeconds < 0) {
@@ -261,27 +486,25 @@ async function updateBetsTab() {
         });
 const createEventHTML = (event, isUpdate = false) => {
     const now = new Date();
-    const endTime = new Date(event.end_time + 'Z'); // Добавляем Z для UTC
+    const endTime = new Date(event.end_time + 'Z');
     const startTime = new Date(event.start_time + 'Z');
     
     let remainingSeconds = 0;
     let showBlur = false;
 
     if (event.status === "active") {
-        // Рассчитываем реальное оставшееся время в СЕКУНДАХ
+
         remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
         showBlur = false;
         
         console.log(`Event ${event.id}: now=${now.toISOString()}, endTime=${endTime.toISOString()}, remaining=${remainingSeconds}s`);
         
-        // Проверяем, есть ли сохраненное время в localStorage
         const savedSeconds = parseInt(localStorage.getItem(`timer_${event.id}`));
         if (!isNaN(savedSeconds) && savedSeconds > 0 && savedSeconds < remainingSeconds) {
-            // Используем сохраненное время только если оно меньше реального
+
             remainingSeconds = savedSeconds;
         }
         
-        // Если осталось меньше 5 секунд, считаем что событие закончилось
         if (remainingSeconds < 5) {
             showBlur = true;
             remainingSeconds = 0;
@@ -291,7 +514,6 @@ const createEventHTML = (event, isUpdate = false) => {
         showBlur = true;
         localStorage.removeItem(`timer_${event.id}`);
     } else if (event.status === "upcoming") {
-        // Для upcoming используем длительность события
         remainingSeconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
         showBlur = false;
     }
@@ -319,24 +541,24 @@ const createEventHTML = (event, isUpdate = false) => {
     const animationClass = isUpdate ? '' : '_animation';
 
     return `
-        <div class="right-home__element ${animationClass}" data-event-id="${event.id}">
-            <div class="right-home__top">${event.description}</div>
+<div class="right-home__element ${animationClass}" data-event-id="${event.id}" data-original-description="${event.description}">
+    <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
             <div class="right-home__wwp">
                 <div class="right-home__blur" style="display: ${showBlur ? 'flex' : 'none'}">
                     <img src="img/cec.png" alt>
-                    <span>The event has ended</span>
-                    <p>please check the "Result" tab</p>
+<span>${TRANSLATIONS[currentLanguage].eventEnded}</span>
+<p>${TRANSLATIONS[currentLanguage].checkResults}</p>
                 </div>
                 <div class="right-home__timer" data-timer-seconds="${remainingSeconds}" data-event-id="${event.id}" data-event-status="${event.status}">
                     <img src="img/Bold/Time/Clock Square.png" alt>
                     <span></span>
                 </div>
                 <div class="right-home__info">
-                    <div class="right-home__top-info">
-                        <div>Model</div>
-                        <div>Bet</div>
-                        <div>Amount</div>
-                    </div>
+<div class="right-home__top-info">
+    <div>${TRANSLATIONS[currentLanguage].model}</div>
+    <div>${TRANSLATIONS[currentLanguage].bet}</div>
+    <div>${TRANSLATIONS[currentLanguage].amount}</div>
+</div>
                     <ul class="right-home__list">
                         ${betsHTML}
                     </ul>
@@ -456,9 +678,9 @@ async function updateResultsTab() {
                 `;
             }).join('');
             
-            resultsContainer.innerHTML += `
-                <div class="right-home__element">
-                    <div class="right-home__top">${event.description}</div>
+resultsContainer.innerHTML += `
+    <div class="right-home__element" data-original-description="${event.description}">
+        <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
                     <div class="right-home__info">
                         <ul class="right-home__list">
                             ${betsHTML}
@@ -1347,3 +1569,17 @@ if (window.MutationObserver) {
 
 
 setTimeout(adjustBubbleMapHeight, 1500);
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    initLanguageSwitcher();
+    
+    if (document.querySelector('.leaderbord')) {
+        initLeaderboard();
+    } else if (document.querySelector('.home')) {
+        initApp();
+    }
+});
