@@ -867,7 +867,7 @@ function initAIChat() {
     const listItems = list.querySelectorAll('li');
     listItems.forEach((item, index) => {
         item.addEventListener('click', () => {
-const models = ["GPT", "Claude", "Gemini Pro", "Grok", "DeepSeek", "Qwen Max"];
+const models = ["gpt", "Claude", "Gemini Pro", "Grok", "DeepSeek", "Qwen Max"];
 selectedModel = models[index];
             
             const img = item.querySelector('img');
@@ -915,7 +915,7 @@ selectedModel = models[index];
             
             const config = MODEL_CONFIG[selectedModel];
 
-            const modelName = config ? config.name : 'AI';
+            const modelName = config ? config.name : 'GPT-5';
             const modelImg = config ? config.img : 'img/gpt-c.png';
             
             aiMsg.innerHTML = `
