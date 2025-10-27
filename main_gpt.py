@@ -55,7 +55,11 @@ class Event(Base):
     end_time = Column(DateTime)
     status = Column(String, default="upcoming")
     result = Column(Enum(SideEnum), nullable=True)
+    start_in_seconds = Column(Integer, default=0)  # задержка перед активацией
+    duration_minutes = Column(Integer, default=10)  # исходная длительность события
     bets = relationship("Bet", back_populates="event")
+
+
 
 class Bet(Base):
     __tablename__ = "bets"
@@ -117,6 +121,8 @@ class BubbleMapItem(BaseModel):
 class EventCreateSchema(BaseModel):
     description: str
     duration_minutes: Optional[int] = 10
+    start_in_seconds: Optional[int] = 0  # через сколько секунд активировать событие
+
 
 class EventResultSchema(BaseModel):
     result: SideEnum
@@ -403,17 +409,26 @@ async def model_chat(request: ChatRequest):
 @app.post("/events")
 def add_event(event_data: EventCreateSchema):
     db = SessionLocal()
-    duration = timedelta(minutes=event_data.duration_minutes)
     event = Event(
         description=event_data.description,
         start_time=datetime.utcnow(),
-        end_time=datetime.utcnow() + duration
+        end_time=datetime.utcnow() + timedelta(minutes=event_data.duration_minutes),
+        start_in_seconds=event_data.start_in_seconds,
+        duration_minutes=event_data.duration_minutes
     )
     db.add(event)
     db.commit()
     db.refresh(event)
     db.close()
-    return {"id": event.id, "description": event.description, "duration_minutes": event_data.duration_minutes, "status": "upcoming"}
+    return {
+        "id": event.id,
+        "description": event.description,
+        "duration_minutes": event_data.duration_minutes,
+        "start_in_seconds": event_data.start_in_seconds,
+        "status": "upcoming"
+    }
+
+
 
 @app.patch("/events/{event_id}/result")
 async def set_event_result(event_id: int, data: EventResultSchema):
@@ -434,22 +449,25 @@ async def websocket_bubble_map(ws: WebSocket):
             await asyncio.sleep(10**6)
     except WebSocketDisconnect:
         manager.disconnect(ws)
-
 async def scheduler():
     while True:
         db = SessionLocal()
-        event = db.query(Event).filter_by(status="upcoming").first()
-        if event:
-            # ВАЖНО: когда событие становится активным, устанавливаем новое end_time
-            now = datetime.utcnow()
-            duration = event.end_time - event.start_time  # Оригинальная длительность
-            event.start_time = now  # Новое время старта
-            event.end_time = now + duration  # Новое время окончания
-            event.status = "active"
-            db.commit()
-            await generate_bets(event)
+        upcoming_events = db.query(Event).filter_by(status="upcoming").all()
+        now = datetime.utcnow()
+        for event in upcoming_events:
+            # проверяем, прошло ли время задержки
+            delta = now - event.start_time
+            if delta.total_seconds() >= event.start_in_seconds:
+                # активируем событие с правильной длительностью
+                event.start_time = now
+                event.end_time = now + timedelta(minutes=event.duration_minutes)
+                event.status = "active"
+                db.commit()
+                await generate_bets(event)
         db.close()
-        await asyncio.sleep(180)
+        await asyncio.sleep(5)  # проверяем каждые 5 секунд
+
+
 
 @app.on_event("startup")
 async def startup_event():

@@ -37,20 +37,25 @@
     <a href="index.html" class="back-btn">← Back to Dashboard</a>
   </div>
 
-  <div class="card">
-    <h3>➕ Create New Event</h3>
-    <label>Event Title *
-      <input id="eventTitle" type="text" placeholder="Will Bitcoin drop by 1% in 10 minutes?" />
-    </label>
-    <label>Description (optional)
-      <textarea id="eventDescription" placeholder="Market prediction event..."></textarea>
-    </label>
-    <label>Duration (minutes)
-      <input id="eventDuration" type="number" value="10" min="1" max="1440" />
-      <div class="small">How long before the event resolves (1-1440 minutes)</div>
-    </label>
-    <button onclick="createNewEvent()">Create Event</button>
-  </div>
+<div class="card">
+  <h3>➕ Create New Event</h3>
+  <label>Event Title *
+    <input id="eventTitle" type="text" placeholder="Will Bitcoin drop by 1% in 10 minutes?" />
+  </label>
+  <label>Description (optional)
+    <textarea id="eventDescription" placeholder="Market prediction event..."></textarea>
+  </label>
+  <label>Duration (minutes)
+    <input id="eventDuration" type="number" value="10" min="1" max="1440" />
+    <div class="small">How long before the event resolves (1-1440 minutes)</div>
+  </label>
+  <label>Start Delay (seconds)
+    <input id="eventStartDelay" type="number" value="0" min="0" />
+    <div class="small">Через сколько секунд событие станет ACTIVE после создания</div>
+  </label>
+  <button onclick="createNewEvent()">Create Event</button>
+</div>
+
 
   <div class="card">
     <h3>📋 All Events</h3>
@@ -72,7 +77,7 @@
   </div>
 
 <script>
-const API = "http://localhost:8000";
+const API = "https://api.polymind.me:443";
 
 async function safeJson(res){
   const text = await res.text();
@@ -84,19 +89,25 @@ async function safeJson(res){
 async function createNewEvent() {
   const description = document.getElementById("eventTitle").value.trim();
   const duration = parseInt(document.getElementById("eventDuration").value);
+  const startDelay = parseInt(document.getElementById("eventStartDelay").value) || 0;
 
   if (!description) { alert("Title is required"); return; }
 
   const res = await fetch(`${API}/events`, {
     method: "POST",
     headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({description, duration_minutes: duration})
+    body: JSON.stringify({
+      description,
+      duration_minutes: duration,
+      start_in_seconds: startDelay
+    })
   });
 
   await safeJson(res);
   alert("Event created!");
   loadEvents();
 }
+
 
 async function loadEvents(){
   try{
@@ -149,9 +160,9 @@ async function resolveEvent(id, side){
   }catch(e){console.error(e);}
 }
 
-// --- Init ---
+
 loadEvents();
-setInterval(loadEvents,5000); // автообновление каждые 5 сек
+setInterval(loadEvents,5000); 
 
 
 
