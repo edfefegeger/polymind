@@ -656,38 +656,45 @@ async function updateResultsTab() {
         
         resultsContainer.innerHTML = '';
         
-        finishedEvents.forEach(event => {
-            const betsHTML = event.bets.map(bet => {
-                const config = MODEL_CONFIG[bet.model_id];
-                if (!config) return '';
-                
-                const profit = bet.profit || 0;
-                const isPositive = profit >= 0;
-                const symbol = isPositive ? '+' : '-';
-                const cssClass = isPositive ? '' : '_red';
-                
-                return `
-                    <li>
-                        <div><img src="${config.img}" alt> ${config.name}</div>
-                        <div class="counter ${cssClass}" data-value="${Math.abs(profit)}">
-                            <span class="symbol">${symbol}$</span>
-                            <span class="odometer">0</span>
-                            <span style="display: none;" class="decimal-od"></span>
-                        </div>
-                    </li>
-                `;
-            }).join('');
-            
-resultsContainer.innerHTML += `
-    <div class="right-home__element" data-original-description="${event.description}">
-        <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
-                    <div class="right-home__info">
-                        <ul class="right-home__list">
-                            ${betsHTML}
-                        </ul>
-                    </div>
+finishedEvents.forEach(event => {
+    const betsHTML = event.bets.map(bet => {
+        const config = MODEL_CONFIG[bet.model_id];
+        if (!config) return '';
+
+        const amount = bet.amount || 0;
+        let profit = bet.profit || 0;
+
+ 
+        if (event.result && profit > 0 && profit > amount) {
+            profit -= amount;
+        }
+
+        const isPositive = profit >= 0;
+        const symbol = isPositive ? '+' : '-';
+        const cssClass = isPositive ? '' : '_red';
+
+        return `
+            <li>
+                <div><img src="${config.img}" alt> ${config.name}</div>
+                <div class="counter ${cssClass}" data-value="${Math.abs(profit)}">
+                    <span class="symbol">${symbol}$</span>
+                    <span class="odometer">0</span>
+                    <span style="display: none;" class="decimal-od"></span>
                 </div>
-            `;
+            </li>
+        `;
+    }).join('');
+
+    resultsContainer.innerHTML += `
+        <div class="right-home__element" data-original-description="${event.description}">
+            <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
+            <div class="right-home__info">
+                <ul class="right-home__list">
+                    ${betsHTML}
+                </ul>
+            </div>
+        </div>
+    `;
         });
         
         updateCounters();
@@ -758,74 +765,23 @@ async function updateLeaderboard() {
         models.forEach(model => {
             balanceMap[model.name] = model.balance;
         });
-        
-        const balances = models.map(m => m.balance);
-        const minBalance = Math.min(...balances);
-        const maxBalance = Math.max(...balances);
-        
-        function calculateNiceScale(min, max) {
-            const range = max - min;
-            
 
-            const expandedMin = Math.max(0, min - range * 0.15);
-            const expandedMax = max + range * 0.15;
-            
-            const roughStep = (expandedMax - expandedMin) / 4;
-            const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
-            
-            let niceStep;
-            const normalized = roughStep / magnitude;
-            if (normalized <= 1) {
-                niceStep = magnitude;
-            } else if (normalized <= 2) {
-                niceStep = 2 * magnitude;
-            } else if (normalized <= 5) {
-                niceStep = 5 * magnitude;
-            } else {
-                niceStep = 10 * magnitude;
-            }
-            
-            const niceMin = Math.floor(expandedMin / niceStep) * niceStep;
-            const niceMax = Math.ceil(expandedMax / niceStep) * niceStep;
-            
-            return {
-                min: niceMin,
-                max: niceMax,
-                step: (niceMax - niceMin) / 4
-            };
-        }
-        
-        const scale = calculateNiceScale(minBalance, maxBalance);
-        
-        console.log('Leaderboard chart data:', {
-            minBalance: minBalance.toFixed(2),
-            maxBalance: maxBalance.toFixed(2),
-            scale: {
-                min: scale.min,
-                max: scale.max,
-                step: scale.step
-            },
-            scaleValues: [
-                scale.max,
-                scale.max - scale.step,
-                scale.max - scale.step * 2,
-                scale.max - scale.step * 3,
-                scale.min
-            ]
-        });
-        
+
+        const FIXED_SCALE_MIN = 5000;
+        const FIXED_SCALE_MAX = 15000;
+        const scale = {
+            min: FIXED_SCALE_MIN,
+            max: FIXED_SCALE_MAX,
+            step: (FIXED_SCALE_MAX - FIXED_SCALE_MIN) / 4
+        };
+
         const percentDiv = document.querySelector('.leaderbord__procent');
         if (percentDiv) {
             const formatValue = (value) => {
-                if (value >= 1000000) {
-                    return (value / 1000000).toFixed(0) + 'M';
-                } else if (value >= 1000) {
-                    return (value / 1000).toFixed(0) + 'k';
-                } else {
-                    return Math.round(value).toString();
-                }
+                if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
+                return Math.round(value).toString();
             };
-            
+
             percentDiv.innerHTML = `
                 <div>${formatValue(scale.max)}</div>
                 <div>${formatValue(scale.max - scale.step)}</div>
@@ -834,35 +790,32 @@ async function updateLeaderboard() {
                 <div style="opacity: 0;">${formatValue(scale.min)}</div>
             `;
         }
-        
+
+
         leaderboard.forEach(item => {
             const config = MODEL_CONFIG[item.model];
             if (!config) return;
-            
+
             const chartClass = MODEL_CHART_CLASSES[item.model];
             const element = document.querySelector(`.${chartClass}`);
-            
+
             if (element) {
                 const heightDiv = element.querySelector('div');
                 if (heightDiv) {
                     const balance = balanceMap[item.model] || 10000;
 
+
                     const normalizedHeight = ((balance - scale.min) / (scale.max - scale.min)) * 93;
-                    const heightPercent = Math.max(5, normalizedHeight);
-                    
+                    const heightPercent = Math.max(5, Math.min(normalizedHeight, 100));
+
                     console.log(`${item.model}: balance=${balance.toFixed(2)}, height=${heightPercent.toFixed(1)}%`);
-                    
+
                     heightDiv.style.setProperty('--height', `${heightPercent}%`);
-                    
-                    if (item.total_pnl < 0) {
-                        heightDiv.style.backgroundColor = '#ff4444';
-                    } else {
-                        heightDiv.style.backgroundColor = '';
-                    }
                 }
             }
         });
-        
+
+
         if (leaderboard.length > 0) {
             const winner = leaderboard[0];
             const config = MODEL_CONFIG[winner.model];
@@ -878,13 +831,14 @@ async function updateLeaderboard() {
                 if (percentDiv) percentDiv.textContent = `${winner.return_percent >= 0 ? '+' : ''}${winner.return_percent.toFixed(1)}%`;
             }
         }
-        
+
         updateCounters();
         
     } catch (error) {
         console.error('Error updating leaderboard:', error);
     }
 }
+
 // ============================================
 // AI Chat Integration
 // ============================================

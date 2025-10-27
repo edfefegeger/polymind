@@ -273,10 +273,10 @@ async def calculate_results(event_id: int, result: SideEnum):
     deltas = {}
 
     for bet in winners:
-        profit = bet.amount + (bet.amount / winners_pool) * losers_pool
+        profit = (bet.amount / winners_pool) * losers_pool
         bet.profit = profit
         model = db.query(Model).filter_by(id=bet.model_id).first()
-        model.balance += profit
+        model.balance += profit 
         model.wins += 1
         model.biggest_win = max(model.biggest_win, profit)
         deltas[model.id] = profit
