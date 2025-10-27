@@ -713,49 +713,52 @@ async function updateLeaderboard() {
             const elements = leaderboardTop.querySelectorAll('.leaderbord__el:not(:first-child)');
             elements.forEach(el => el.remove());
             
-            leaderboard.forEach(item => {
-                const config = MODEL_CONFIG[item.model];
-                if (!config) return;
-                
-                const rowHTML = `
-                    <div class="leaderbord__el">
-                        <div>${item.rank}</div>
-                        <div><img src="${config.img}" alt> ${config.name}</div>
-                        <div class="counter" data-value="${item.return_percent.toFixed(2)}">
-                            <span class="symbol">${item.return_percent >= 0 ? '+' : ''}</span>
-                            <span class="odometer">0</span>
-                            <span>.</span>
-                            <span class="decimal-od">00</span>
-                            <span class="symbol">%</span>
-                        </div>
-                        <div class="counter" data-value="${Math.abs(item.total_pnl).toFixed(2)}">
-                            <span class="symbol">${item.total_pnl >= 0 ? '$' : '-$'}</span>
-                            <span class="odometer">0</span>
-                            <span>.</span>
-                            <span class="decimal-od">00</span>
-                        </div>
-                        <div class="counter" data-value="${item.win_rate.toFixed(2)}">
-                            <span class="symbol"></span>
-                            <span class="odometer">0</span>
-                            <span>.</span>
-                            <span class="decimal-od">00</span>
-                            <span class="symbol">%</span>
-                        </div>
-                        <div class="counter" data-value="${item.biggest_win}">
-                            <span class="symbol">$</span>
-                            <span class="odometer">0</span>
-                            <span style="display: none;" class="decimal-od"></span>
-                        </div>
-                        <div class="counter _minus" data-value="${Math.abs(item.biggest_loss).toFixed(2)}">
-                            <span class="symbol">-$</span>
-                            <span class="odometer">0</span>
-                            <span>.</span>
-                            <span class="decimal-od">00</span>
-                        </div>
-                    </div>
-                `;
-                leaderboardTop.insertAdjacentHTML('beforeend', rowHTML);
-            });
+leaderboard.forEach(item => {
+    const config = MODEL_CONFIG[item.model];
+    if (!config) return;
+
+const rowHTML = `
+    <div class="leaderbord__el">
+        <div>${item.rank}</div>
+        <div><img src="${config.img}" alt> ${config.name}</div>
+        <div class="counter ${item.return_percent < 0 ? '_minus' : '_plus'}" data-value="${item.return_percent.toFixed(2)}">
+            <span class="symbol">${item.return_percent >= 0 ? '+' : ''}</span>
+            <span class="odometer">0</span>
+            <span>.</span>
+            <span class="decimal-od">00</span>
+            <span class="symbol">%</span>
+        </div>
+        <div class="counter ${item.total_pnl < 0 ? '_minus' : '_plus'}" data-value="${Math.abs(item.total_pnl).toFixed(2)}">
+            <span class="symbol">${item.total_pnl >= 0 ? '$' : '-$'}</span>
+            <span class="odometer">0</span>
+            <span>.</span>
+            <span class="decimal-od">00</span>
+        </div>
+        <div class="counter ${item.win_rate < 0 ? '_minus' : '_plus'}" data-value="${item.win_rate.toFixed(2)}">
+            <span class="symbol"></span>
+            <span class="odometer">0</span>
+            <span>.</span>
+            <span class="decimal-od">00</span>
+            <span class="symbol">%</span>
+        </div>
+        <div class="counter ${item.biggest_win < 0 ? '_minus' : '_plus'}" data-value="${item.biggest_win}">
+            <span class="symbol">$</span>
+            <span class="odometer">0</span>
+            <span style="display: none;" class="decimal-od"></span>
+        </div>
+        <!-- Biggest Loss всегда красный -->
+        <div class="counter _minus" data-value="${Math.abs(item.biggest_loss).toFixed(2)}">
+            <span class="symbol">-$</span>
+            <span class="odometer">0</span>
+            <span>.</span>
+            <span class="decimal-od">00</span>
+        </div>
+    </div>
+`;
+leaderboardTop.insertAdjacentHTML('beforeend', rowHTML);
+
+});
+
         }
         
         const modelsResponse = await fetch(`${API_URL}/models`);

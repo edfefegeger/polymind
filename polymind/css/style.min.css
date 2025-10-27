@@ -2835,3 +2835,10 @@ body.ie ._ibg img {
     transform-origin: top left;
     transition: transform 0.2s ease;
 }
+.counter._plus {
+    color: green;
+}
+
+.counter._minus {
+    color: red;
+}
