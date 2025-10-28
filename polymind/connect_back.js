@@ -579,41 +579,63 @@ const createEventHTML = (event, isUpdate = false) => {
     `;
 };
 
-        const processedEventIds = new Set();
-        const allEvents = [];
-        
-        if (currentEvent && currentEvent.status === 'active') {
-            allEvents.push(currentEvent);
-        }
-        
-        eventHistory
-            .filter(event => {
-   
-                const isActiveOrFinished = event.status === 'active' || event.status === 'finished';
-                const isNotCurrentEvent = !currentEvent || event.id !== currentEvent.id;
-                return isActiveOrFinished && isNotCurrentEvent;
-            })
-            .forEach(event => allEvents.push(event));
+const processedEventIds = new Set();
+const allEvents = [];
 
-        allEvents.forEach(event => {
-            processedEventIds.add(event.id);
-            
-            if (existingEvents.has(event.id)) {
-                const existingEl = existingEvents.get(event.id);
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = createEventHTML(event, true);
-                const newEl = tempDiv.firstElementChild;
-                
-                existingEl.replaceWith(newEl);
-                
-                setupHoverEffect(newEl);
-            } else {
-              
-                betsContainer.insertAdjacentHTML('beforeend', createEventHTML(event, false));
-                const newEl = betsContainer.lastElementChild;
-                setupHoverEffect(newEl);
-            }
-        });
+if (currentEvent && currentEvent.status === 'active') {
+    allEvents.push(currentEvent);
+}
+
+
+eventHistory.forEach(event => {
+    const isNotCurrentEvent = !currentEvent || event.id !== currentEvent.id;
+    if (isNotCurrentEvent) allEvents.push(event);
+});
+
+
+const statusOrder = {
+    active: 0,
+    upcoming: 1,
+    finished: 2
+};
+
+allEvents.sort((a, b) => {
+    const aStatus = statusOrder[a.status] ?? 3;
+    const bStatus = statusOrder[b.status] ?? 3;
+
+
+    if (aStatus !== bStatus) {
+        return aStatus - bStatus;
+    }
+
+    const aEnd = new Date(a.end_time + 'Z');
+    const bEnd = new Date(b.end_time + 'Z');
+
+    if (a.status === 'finished' && b.status === 'finished') {
+        return bEnd - aEnd; 
+    } else {
+        return aEnd - bEnd; 
+    }
+});
+
+
+allEvents.forEach(event => {
+    processedEventIds.add(event.id);
+
+    if (existingEvents.has(event.id)) {
+        const existingEl = existingEvents.get(event.id);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = createEventHTML(event, true);
+        const newEl = tempDiv.firstElementChild;
+
+        existingEl.replaceWith(newEl);
+        setupHoverEffect(newEl);
+    } else {
+        betsContainer.insertAdjacentHTML('beforeend', createEventHTML(event, false));
+        const newEl = betsContainer.lastElementChild;
+        setupHoverEffect(newEl);
+    }
+});
 
         existingEvents.forEach((el, eventId) => {
             if (!processedEventIds.has(eventId)) {
