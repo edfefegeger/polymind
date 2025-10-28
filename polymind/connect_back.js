@@ -333,28 +333,38 @@ function updateTimers() {
         const span = timerEl.querySelector('span');
 
         if (eventStatus === 'finished') {
-            if (span) span.textContent = '0:00';
+            if (span) span.textContent = '0m 0s';
             return;
         }
 
         if (timerEl.dataset.timerRunning === 'true') {
             return;
         }
-        
+
         timerEl.dataset.timerRunning = 'true';
 
         let remainingSeconds = parseInt(timerEl.getAttribute('data-timer-seconds'));
-        
+
         if (isNaN(remainingSeconds) || remainingSeconds < 0) {
             remainingSeconds = 0;
         }
-        
+
         console.log(`Starting timer for event ${timerId}: ${remainingSeconds} seconds`);
 
         const updateDisplay = () => {
-            const mins = Math.floor(remainingSeconds / 60);
+            const days = Math.floor(remainingSeconds / (24 * 3600));
+            const hours = Math.floor((remainingSeconds % (24 * 3600)) / 3600);
+            const mins = Math.floor((remainingSeconds % 3600) / 60);
             const secs = remainingSeconds % 60;
-            if (span) span.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+
+            let timeStr = '';
+
+            if (days > 0) timeStr += `${days}d `;
+            if (hours > 0 || days > 0) timeStr += `${hours}h `;
+            timeStr += `${mins}m ${secs.toString().padStart(2, '0')}s`;
+
+            if (span) span.textContent = timeStr.trim();
 
             if (remainingSeconds > 0) {
                 remainingSeconds--;
@@ -374,6 +384,7 @@ function updateTimers() {
         updateDisplay();
     });
 }
+
 
 
 
