@@ -1,4 +1,4 @@
-const COMMUNITY_API_URL = "https://api.polymind.me:8443/community";
+const COMMUNITY_API_URL = "https://api.polymind.me:443/community";
 
 const MODEL_CONFIG = {
     "GPT": {
