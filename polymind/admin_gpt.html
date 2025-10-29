@@ -3,32 +3,255 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Events Admin — Manage Betting Events</title>
+<title>Markets Admin — Manage Betting Events</title>
 <style>
-  body{font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#e6eef8;padding:20px}
-  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}
-  h2{color:#64ffda;margin:0}
-  .back-btn{padding:10px 20px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block}
-  .back-btn:hover{background:#7a8cff}
-  .card{background:#0f1a2b;padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.08)}
-  label{display:block;margin-top:12px;font-size:13px;color:#9fb0d6;font-weight:600}
-  input,select,textarea{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:#071025;color:#e6eef8;width:100%;font-family:inherit;margin-top:6px}
-  textarea{resize:vertical;min-height:60px}
-  button{margin-top:12px;padding:12px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#43e97b 0%,#38f9d7 100%);color:white;cursor:pointer;font-weight:600;transition:all 0.3s}
-  button:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(67,233,123,0.4)}
-  button.danger{background:linear-gradient(135deg,#ff6b6b 0%,#ee5a6f 100%)}
-  button.warning{background:linear-gradient(135deg,#feca57 0%,#ff9ff3 100%)}
-  table{width:100%;border-collapse:collapse;margin-top:16px}
-  th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:left}
-  th{color:#64ffda;font-weight:600;font-size:13px;text-transform:uppercase}
-  td{color:#dbe9ff;font-size:14px}
-  .status-badge{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;display:inline-block}
-  .status-upcoming{background:rgba(255,206,84,0.2);color:#ffce54}
-  .status-active{background:rgba(100,255,218,0.2);color:#64ffda}
-  .status-finished{background:rgba(136,146,176,0.2);color:#8892b0}
-  .actions{display:flex;gap:8px;flex-wrap:wrap}
-  .actions button{margin:0;padding:6px 12px;font-size:12px}
-  .small{font-size:12px;color:#93a7cf;margin-top:4px}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+  color: #e6edf3;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.header {
+  max-width: 1400px;
+  margin: 0 auto 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.header h2 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.back-btn {
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.back-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.market-toggle {
+  max-width: 1400px;
+  margin: 0 auto 30px;
+  display: flex;
+  gap: 10px;
+  background: rgba(255,255,255,0.05);
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.market-toggle button {
+  flex: 1;
+  padding: 15px;
+  background: transparent;
+  color: #8892b0;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.market-toggle button.active {
+  background: rgba(255, 227, 116, 0.2);
+  color: #ffe374;
+}
+
+.market-toggle button:hover:not(.active) {
+  background: rgba(255,255,255,0.05);
+  color: #e6edf3;
+}
+
+.card {
+  max-width: 1400px;
+  margin: 0 auto 30px;
+  background: rgba(255,255,255,0.05);
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.card h3 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  color: #ffe374;
+}
+
+label {
+  display: block;
+  margin-bottom: 15px;
+  font-weight: 500;
+  color: #cdd9e5;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #e6edf3;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #ffe374;
+  background: rgba(0,0,0,0.4);
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.small {
+  font-size: 12px;
+  color: #8892b0;
+  margin-top: 5px;
+}
+
+button {
+  padding: 12px 24px;
+  background: #ffe374;
+  color: #1d1d1d;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+button:hover {
+  background: #ffd74a;
+  transform: translateY(-2px);
+}
+
+button.warning {
+  background: #ff6b6b;
+  color: white;
+}
+
+button.warning:hover {
+  background: #ff5252;
+}
+
+button.success {
+  background: #51cf66;
+  color: white;
+}
+
+button.success:hover {
+  background: #40c057;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+th {
+  background: rgba(0,0,0,0.3);
+  color: #ffe374;
+  font-weight: 600;
+}
+
+td {
+  color: #cdd9e5;
+}
+
+tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-active {
+  background: rgba(81, 207, 102, 0.2);
+  color: #51cf66;
+}
+
+.status-upcoming {
+  background: rgba(255, 227, 116, 0.2);
+  color: #ffe374;
+}
+
+.status-finished {
+  background: rgba(136, 146, 176, 0.2);
+  color: #8892b0;
+}
+
+.actions {
+  white-space: nowrap;
+}
+
+.community-fields {
+  display: none;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.community-fields.visible {
+  display: block;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+@media (max-width: 768px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+}
 </style>
 </head>
 <body>
@@ -37,27 +260,68 @@
     <a href="index.html" class="back-btn">← Back to Dashboard</a>
   </div>
 
-  <div class="card">
-    <h3>➕ Create New Event</h3>
-    <label>Event Title *
-      <input id="eventTitle" type="text" placeholder="Will Bitcoin drop by 1% in 10 minutes?" />
-    </label>
-    <label>Description (optional)
-      <textarea id="eventDescription" placeholder="Market prediction event..."></textarea>
-    </label>
-    <label>Duration (minutes)
-      <input id="eventDuration" type="number" value="10" min="1" max="1440" />
-      <div class="small">How long before the event resolves (1-1440 minutes)</div>
-    </label>
-    <button onclick="createNewEvent()">Create Event</button>
+  <div class="market-toggle">
+    <button id="mainMarketBtn" class="active" onclick="switchMarket('main')">
+      📊 Main Markets
+    </button>
+    <button id="communityMarketBtn" onclick="switchMarket('community')">
+      👥 Community Markets
+    </button>
   </div>
 
   <div class="card">
-    <h3>📋 All Events</h3>
+    <h3 id="createTitle">➕ Create New Event</h3>
+    
+    <label>Event Title *
+      <input id="eventTitle" type="text" placeholder="Will Bitcoin drop by 1% in 10 minutes?" />
+    </label>
+    
+    <label>Description (optional)
+      <textarea id="eventDescription" placeholder="Market prediction event..."></textarea>
+    </label>
+    
+    <div class="grid-2">
+      <label>Duration (minutes)
+        <input id="eventDuration" type="number" value="10" min="1" max="1440" />
+        <div class="small">How long before the event resolves (1-1440 minutes)</div>
+      </label>
+      
+      <label>Start Delay (seconds)
+        <input id="eventStartDelay" type="number" value="0" min="0" />
+        <div class="small">Delay before event becomes ACTIVE</div>
+      </label>
+    </div>
+
+    <div id="communityFields" class="community-fields">
+      <h3 style="margin-bottom: 15px; font-size: 18px;">👥 Community Settings</h3>
+      
+      <div class="grid-2">
+        <label>Username *
+          <input id="communityUsername" type="text" placeholder="@cryptotrader" />
+          <div class="small">Unique username for this event</div>
+        </label>
+        
+        <label>Twitter/X Link *
+          <input id="communityTwitter" type="url" placeholder="https://x.com/username/status/..." />
+          <div class="small">Link to the X/Twitter post</div>
+        </label>
+      </div>
+      
+      <label>Avatar URL (optional)
+        <input id="communityAvatar" type="url" placeholder="https://example.com/avatar.jpg" />
+        <div class="small">URL to user's avatar image (defaults to img/avatarr.webp)</div>
+      </label>
+    </div>
+    
+    <button id="createBtn" onclick="createNewEvent()">Create Event</button>
+  </div>
+
+  <div class="card">
+    <h3 id="eventsTitle">📋 All Events</h3>
     <button onclick="loadEvents()">🔄 Refresh List</button>
     <table id="eventsTable">
       <thead>
-        <tr>
+        <tr id="tableHeader">
           <th>ID</th>
           <th>Title</th>
           <th>Duration</th>
@@ -72,96 +336,230 @@
   </div>
 
 <script>
-const API = "http://localhost:8000";
+const MAIN_API = "https://api.polymind.me:443";
+const COMMUNITY_API = "https://api.polymind.me:443/community";
 
-async function safeJson(res){
+let currentMarket = 'main';
+
+function switchMarket(market) {
+  currentMarket = market;
+  
+  const mainBtn = document.getElementById('mainMarketBtn');
+  const communityBtn = document.getElementById('communityMarketBtn');
+  const communityFields = document.getElementById('communityFields');
+  const createTitle = document.getElementById('createTitle');
+  const eventsTitle = document.getElementById('eventsTitle');
+  const tableHeader = document.getElementById('tableHeader');
+  
+  if (market === 'main') {
+    mainBtn.classList.add('active');
+    communityBtn.classList.remove('active');
+    communityFields.classList.remove('visible');
+    createTitle.textContent = '➕ Create New Main Market Event';
+    eventsTitle.textContent = '📋 Main Market Events';
+    
+    // Reset header for main markets
+    tableHeader.innerHTML = `
+      <th>ID</th>
+      <th>Title</th>
+      <th>Duration</th>
+      <th>Status</th>
+      <th>Pools</th>
+      <th>Winner</th>
+      <th>Actions</th>
+    `;
+  } else {
+    mainBtn.classList.remove('active');
+    communityBtn.classList.add('active');
+    communityFields.classList.add('visible');
+    createTitle.textContent = '➕ Create New Community Market Event';
+    eventsTitle.textContent = '📋 Community Market Events';
+    
+    // Update header for community markets
+    tableHeader.innerHTML = `
+      <th>ID</th>
+      <th>Title</th>
+      <th>Username</th>
+      <th>Duration</th>
+      <th>Status</th>
+      <th>Pools</th>
+      <th>Winner</th>
+      <th>Actions</th>
+    `;
+  }
+  
+  loadEvents();
+}
+
+async function safeJson(res) {
   const text = await res.text();
-  if(!text) return {};
-  try{return JSON.parse(text);}
-  catch(e){console.error("Bad JSON:",text);throw e;}
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error("Bad JSON:", text);
+    throw e;
+  }
 }
 
 async function createNewEvent() {
   const description = document.getElementById("eventTitle").value.trim();
   const duration = parseInt(document.getElementById("eventDuration").value);
+  const startDelay = parseInt(document.getElementById("eventStartDelay").value) || 0;
 
-  if (!description) { alert("Title is required"); return; }
+  if (!description) {
+    alert("Title is required");
+    return;
+  }
 
-  const res = await fetch(`${API}/events`, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({description, duration_minutes: duration})
-  });
+  const payload = {
+    description,
+    duration_minutes: duration,
+    start_in_seconds: startDelay
+  };
 
-  await safeJson(res);
-  alert("Event created!");
-  loadEvents();
+  if (currentMarket === 'community') {
+    const username = document.getElementById("communityUsername").value.trim();
+    const twitter = document.getElementById("communityTwitter").value.trim();
+    const avatar = document.getElementById("communityAvatar").value.trim();
+
+    if (!username) {
+      alert("Username is required for Community Markets");
+      return;
+    }
+    
+    if (!twitter) {
+      alert("Twitter/X link is required for Community Markets");
+      return;
+    }
+
+    payload.username = username;
+    payload.twitter_link = twitter;
+    payload.avatar_url = avatar || "img/avatarr.webp";
+  }
+
+  try {
+    const api = currentMarket === 'main' ? MAIN_API : COMMUNITY_API;
+    const res = await fetch(`${api}/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    await safeJson(res);
+    alert("Event created successfully!");
+    
+    // Clear form
+    document.getElementById("eventTitle").value = "";
+    document.getElementById("eventDescription").value = "";
+    document.getElementById("eventDuration").value = "10";
+    document.getElementById("eventStartDelay").value = "0";
+    
+    if (currentMarket === 'community') {
+      document.getElementById("communityUsername").value = "";
+      document.getElementById("communityTwitter").value = "";
+      document.getElementById("communityAvatar").value = "";
+    }
+    
+    loadEvents();
+  } catch (error) {
+    console.error("Error creating event:", error);
+    alert("Error creating event. Check console for details.");
+  }
 }
 
-async function loadEvents(){
-  try{
-    const res = await fetch(`${API}/events/history`);
+async function loadEvents() {
+  try {
+    const api = currentMarket === 'main' ? MAIN_API : COMMUNITY_API;
+    const res = await fetch(`${api}/events/history`);
     const events = await safeJson(res);
     const tbody = document.querySelector('#eventsTable tbody');
     tbody.innerHTML = '';
 
-    if(!Array.isArray(events)||events.length===0){
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#8892b0">No events found</td></tr>';
+    if (!Array.isArray(events) || events.length === 0) {
+      const colspan = currentMarket === 'community' ? 8 : 7;
+      tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center;color:#8892b0">No events found</td></tr>`;
       return;
     }
 
-events.forEach(ev => {
-  const totalYes = ev.total_yes || 0;
-  const totalNo = ev.total_no || 0;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${ev.id}</td>
-    <td>${ev.description}</td>
-    <td>${Math.round((new Date(ev.end_time)-new Date(ev.start_time))/60000)} min</td>
-    <td><span class="status-badge status-${ev.status}">${ev.status}</span></td>
-    <td>
-      YES: $${totalYes}<br>
-      NO: $${totalNo}
-    </td>
-    <td>${ev.result||'-'}</td>
-    <td class="actions">
-      ${ev.status==='active' ? `
-        <button class="warning" onclick="resolveEvent(${ev.id}, 'YES')">YES</button>
-        <button class="warning" onclick="resolveEvent(${ev.id}, 'NO')">NO</button>` : ''}
-    </td>
-  `;
-  tbody.appendChild(tr);
-});
+    events.forEach(ev => {
+      const totalYes = ev.total_yes || 0;
+      const totalNo = ev.total_no || 0;
+      const tr = document.createElement('tr');
+      
+      if (currentMarket === 'community') {
+        tr.innerHTML = `
+          <td>${ev.id}</td>
+          <td>${ev.description}</td>
+          <td>
+            ${ev.username || 'N/A'}<br>
+            ${ev.twitter_link ? `<a href="${ev.twitter_link}" target="_blank" style="color: #ffe374; font-size: 12px;">View on X →</a>` : ''}
+          </td>
+          <td>${Math.round((new Date(ev.end_time) - new Date(ev.start_time)) / 60000)} min</td>
+          <td><span class="status-badge status-${ev.status}">${ev.status}</span></td>
+          <td>
+            YES: $${totalYes.toFixed(2)}<br>
+            NO: $${totalNo.toFixed(2)}
+          </td>
+          <td>${ev.result || '-'}</td>
+          <td class="actions">
+            ${ev.status === 'active' ? `
+              <button class="success" onclick="resolveEvent(${ev.id}, 'YES')">YES</button>
+              <button class="warning" onclick="resolveEvent(${ev.id}, 'NO')">NO</button>
+            ` : ''}
+          </td>
+        `;
+      } else {
+        tr.innerHTML = `
+          <td>${ev.id}</td>
+          <td>${ev.description}</td>
+          <td>${Math.round((new Date(ev.end_time) - new Date(ev.start_time)) / 60000)} min</td>
+          <td><span class="status-badge status-${ev.status}">${ev.status}</span></td>
+          <td>
+            YES: $${totalYes.toFixed(2)}<br>
+            NO: $${totalNo.toFixed(2)}
+          </td>
+          <td>${ev.result || '-'}</td>
+          <td class="actions">
+            ${ev.status === 'active' ? `
+              <button class="success" onclick="resolveEvent(${ev.id}, 'YES')">YES</button>
+              <button class="warning" onclick="resolveEvent(${ev.id}, 'NO')">NO</button>
+            ` : ''}
+          </td>
+        `;
+      }
+      
+      tbody.appendChild(tr);
+    });
 
-  }catch(e){console.error(e);alert('Error loading events');}
+  } catch (e) {
+    console.error(e);
+    alert('Error loading events');
+  }
 }
 
-async function resolveEvent(id, side){
-  if(!confirm(`Resolve event with ${side} as winner?`)) return;
-  try{
-    await fetch(`${API}/events/${id}/result`,{
-      method:'PATCH',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({result:side})
+async function resolveEvent(id, side) {
+  if (!confirm(`Resolve event ${id} with ${side} as winner?`)) return;
+  
+  try {
+    const api = currentMarket === 'main' ? MAIN_API : COMMUNITY_API;
+    await fetch(`${api}/events/${id}/result`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result: side })
     });
+    
     alert(`Event ${id} resolved as ${side}`);
     loadEvents();
-  }catch(e){console.error(e);}
+  } catch (e) {
+    console.error(e);
+    alert('Error resolving event');
+  }
 }
 
-// --- Init ---
+// Initial load
 loadEvents();
-setInterval(loadEvents,5000); // автообновление каждые 5 сек
-
-
-
-
-
-
-
-
-
-
+setInterval(loadEvents, 5000);
 </script>
 
 </body>
