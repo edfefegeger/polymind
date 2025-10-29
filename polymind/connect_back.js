@@ -472,8 +472,8 @@ function addNewItems() {
     });
 }
 
-let lastBetsDataHash = "";
 
+let lastBetsDataHash = "";
 async function updateBetsTab() {
     try {
         const [currentEvent, eventHistory] = await Promise.all([
@@ -483,7 +483,8 @@ async function updateBetsTab() {
 
         const combinedData = JSON.stringify({ currentEvent, eventHistory });
         const newHash = await digestMessage(combinedData);
-        if (newHash === lastBetsDataHash) return;
+
+        if (newHash === lastBetsDataHash) return; 
         lastBetsDataHash = newHash;
 
         const betsContainer = document.querySelector('.right-home__wp._bets');
@@ -494,129 +495,151 @@ async function updateBetsTab() {
             const eventId = el.getAttribute('data-event-id');
             if (eventId) existingEvents.set(eventId, el);
         });
+const createEventHTML = (event, isUpdate = false) => {
+    const now = new Date();
+    const endTime = new Date(event.end_time + 'Z');
+    const startTime = new Date(event.start_time + 'Z');
+    
+    let remainingSeconds = 0;
+    let showBlur = false;
 
-        const createEventHTML = (event, isUpdate = false) => {
-            const now = new Date();
-            const endTime = new Date(event.end_time + 'Z');
-            const startTime = new Date(event.start_time + 'Z');
+    if (event.status === "active") {
 
-            let remainingSeconds = 0;
-            let showBlur = false;
+        remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
+        showBlur = false;
+        
+        console.log(`Event ${event.id}: now=${now.toISOString()}, endTime=${endTime.toISOString()}, remaining=${remainingSeconds}s`);
+        
+        const savedSeconds = parseInt(localStorage.getItem(`timer_${event.id}`));
+        if (!isNaN(savedSeconds) && savedSeconds > 0 && savedSeconds < remainingSeconds) {
 
-            if (event.status === "active") {
-                remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
-                showBlur = false;
-                const savedSeconds = parseInt(localStorage.getItem(`timer_${event.id}`));
-                if (!isNaN(savedSeconds) && savedSeconds > 0 && savedSeconds < remainingSeconds) {
-                    remainingSeconds = savedSeconds;
-                }
-                if (remainingSeconds < 5) {
-                    showBlur = true;
-                    remainingSeconds = 0;
-                }
-            } else if (event.status === "finished") {
-                remainingSeconds = 0;
-                showBlur = true;
-                localStorage.removeItem(`timer_${event.id}`);
-            }
+            remainingSeconds = savedSeconds;
+        }
+        
+        if (remainingSeconds < 5) {
+            showBlur = true;
+            remainingSeconds = 0;
+        }
+    } else if (event.status === "finished") {
+        remainingSeconds = 0;
+        showBlur = true;
+        localStorage.removeItem(`timer_${event.id}`);
+    } else if (event.status === "upcoming") {
+        remainingSeconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
+        showBlur = false;
+    }
 
-            const betsHTML = event.bets.map(bet => {
-                const config = MODEL_CONFIG[bet.model_id];
-                if (!config) return '';
-                const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
-                const amount = bet.amount ?? 0;
-                return `
-                    <li>
-                        <div><img src="${config.img}" alt> ${config.name}</div>
-                        <div><img src="${betImage}" alt></div>
-                        <div>
-                            <div class="counter" data-value="${amount}">
-                                <span class="symbol">$</span>
-                                <span class="odometer">0</span>
-                                <span style="display: none;" class="decimal-od"></span>
-                            </div>
-                        </div>
-                    </li>
-                `;
-            }).join('');
-
-            const animationClass = isUpdate ? '' : '_animation';
-
-            return `
-                <div class="right-home__element ${animationClass}" data-event-id="${event.id}" data-original-description="${event.description}">
-                    <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
-                    <div class="right-home__wwp">
-                        <div class="right-home__blur" style="display: ${showBlur ? 'flex' : 'none'}">
-                            <img src="img/cec.png" alt>
-                            <span>${TRANSLATIONS[currentLanguage].eventEnded}</span>
-                            <p>${TRANSLATIONS[currentLanguage].checkResults}</p>
-                        </div>
-                        <div class="right-home__timer" data-timer-seconds="${remainingSeconds}" data-event-id="${event.id}" data-event-status="${event.status}">
-                            <img src="img/Bold/Time/Clock Square.png" alt>
-                            <span></span>
-                        </div>
-                        <div class="right-home__info">
-                            <div class="right-home__top-info">
-                                <div>${TRANSLATIONS[currentLanguage].model}</div>
-                                <div>${TRANSLATIONS[currentLanguage].bet}</div>
-                                <div>${TRANSLATIONS[currentLanguage].amount}</div>
-                            </div>
-                            <ul class="right-home__list">
-                                ${betsHTML}
-                            </ul>
-                        </div>
+    const betsHTML = event.bets.map(bet => {
+        const config = MODEL_CONFIG[bet.model_id];
+        if (!config) return '';
+        const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
+        const amount = bet.amount ?? 0;
+        return `
+            <li>
+                <div><img src="${config.img}" alt> ${config.name}</div>
+                <div><img src="${betImage}" alt></div>
+                <div>
+                    <div class="counter" data-value="${amount}">
+                        <span class="symbol">$</span>
+                        <span class="odometer">0</span>
+                        <span style="display: none;" class="decimal-od"></span>
                     </div>
                 </div>
-            `;
-        };
+            </li>
+        `;
+    }).join('');
+
+    const animationClass = isUpdate ? '' : '_animation';
+
+    return `
+<div class="right-home__element ${animationClass}" data-event-id="${event.id}" data-original-description="${event.description}">
+    <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
+            <div class="right-home__wwp">
+                <div class="right-home__blur" style="display: ${showBlur ? 'flex' : 'none'}">
+                    <img src="img/cec.png" alt>
+<span>${TRANSLATIONS[currentLanguage].eventEnded}</span>
+<p>${TRANSLATIONS[currentLanguage].checkResults}</p>
+                </div>
+                <div class="right-home__timer" data-timer-seconds="${remainingSeconds}" data-event-id="${event.id}" data-event-status="${event.status}">
+                    <img src="img/Bold/Time/Clock Square.png" alt>
+                    <span></span>
+                </div>
+                <div class="right-home__info">
+<div class="right-home__top-info">
+    <div>${TRANSLATIONS[currentLanguage].model}</div>
+    <div>${TRANSLATIONS[currentLanguage].bet}</div>
+    <div>${TRANSLATIONS[currentLanguage].amount}</div>
+</div>
+                    <ul class="right-home__list">
+                        ${betsHTML}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+const processedEventIds = new Set();
+const allEvents = [];
 
 
-        const visibleEvents = eventHistory.filter(e => e.status === "active" || e.status === "finished");
+if (currentEvent && currentEvent.status === 'active') {
+    allEvents.push(currentEvent);
+}
 
-        const processedEventIds = new Set();
-        const allEvents = [];
+eventHistory.forEach(event => {
+    const isNotCurrentEvent = !currentEvent || event.id !== currentEvent.id;
+    const isVisible = event.status === 'active' || event.status === 'finished';
+    if (isNotCurrentEvent && isVisible) {
+        allEvents.push(event);
+    }
+});
 
-        if (currentEvent && currentEvent.status === 'active') {
-            allEvents.push(currentEvent);
-        }
 
 
-        visibleEvents.forEach(event => {
-            const isNotCurrentEvent = !currentEvent || event.id !== currentEvent.id;
-            if (isNotCurrentEvent) allEvents.push(event);
-        });
+const statusOrder = {
+    active: 0,
+    upcoming: 1,
+    finished: 2
+};
 
-        const statusOrder = { active: 0, finished: 1 };
+allEvents.sort((a, b) => {
+    const aStatus = statusOrder[a.status] ?? 3;
+    const bStatus = statusOrder[b.status] ?? 3;
 
-        allEvents.sort((a, b) => {
-            const aStatus = statusOrder[a.status] ?? 2;
-            const bStatus = statusOrder[b.status] ?? 2;
 
-            if (aStatus !== bStatus) {
-                return aStatus - bStatus;
-            }
+    if (aStatus !== bStatus) {
+        return aStatus - bStatus;
+    }
 
-            const aEnd = new Date(a.end_time + 'Z');
-            const bEnd = new Date(b.end_time + 'Z');
-            return bEnd - aEnd;
-        });
+    const aEnd = new Date(a.end_time + 'Z');
+    const bEnd = new Date(b.end_time + 'Z');
 
-        allEvents.forEach(event => {
-            processedEventIds.add(event.id);
+    if (a.status === 'finished' && b.status === 'finished') {
+        return bEnd - aEnd; 
+    } else {
+        return aEnd - bEnd; 
+    }
+});
 
-            if (existingEvents.has(event.id)) {
-                const existingEl = existingEvents.get(event.id);
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = createEventHTML(event, true);
-                const newEl = tempDiv.firstElementChild;
-                existingEl.replaceWith(newEl);
-                setupHoverEffect(newEl);
-            } else {
-                betsContainer.insertAdjacentHTML('beforeend', createEventHTML(event, false));
-                const newEl = betsContainer.lastElementChild;
-                setupHoverEffect(newEl);
-            }
-        });
+
+allEvents.forEach(event => {
+    processedEventIds.add(event.id);
+
+    if (existingEvents.has(event.id)) {
+        const existingEl = existingEvents.get(event.id);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = createEventHTML(event, true);
+        const newEl = tempDiv.firstElementChild;
+
+        existingEl.replaceWith(newEl);
+        setupHoverEffect(newEl);
+    } else {
+        betsContainer.insertAdjacentHTML('beforeend', createEventHTML(event, false));
+        const newEl = betsContainer.lastElementChild;
+        setupHoverEffect(newEl);
+    }
+});
 
         existingEvents.forEach((el, eventId) => {
             if (!processedEventIds.has(eventId)) {
@@ -638,15 +661,16 @@ function setupHoverEffect(element) {
     if (!blur) return;
 
     element.addEventListener('mouseenter', () => {
-        blur.classList.add('_hidden');
+        blur.classList.add('_hidden'); 
         if (info) info.style.filter = 'none';
     });
 
     element.addEventListener('mouseleave', () => {
-        blur.classList.remove('_hidden');
+        blur.classList.remove('_hidden'); 
         if (info) info.style.filter = '';
     });
 }
+
 
 async function digestMessage(message) {
     const msgUint8 = new TextEncoder().encode(message);
@@ -656,7 +680,6 @@ async function digestMessage(message) {
 }
 
 setInterval(updateBetsTab, 5000);
-
 
 
 
