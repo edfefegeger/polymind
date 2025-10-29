@@ -7,16 +7,9 @@
 		<link rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-default.min.css" />
 		<link rel="stylesheet" href="css/style.min.css?v4">
+		<link rel="shortcut icon" href="img/fav.png">
 		<style>
-	.counter._plus {
-    color: green;
-}
-
-.counter._minus {
-    color: red;
-
-}
-header {
+.header {
   background: #1d1d1d;
   position: relative;
   z-index: 1000;
@@ -371,14 +364,47 @@ header {
 .header__el div.counter {
   color: #ffe374;
 }
+.home__bottom 
+{overflow: visible !important;
+}
+
 </style>
-		<link rel="shortcut icon" href="img/fav.png">
 		<!-- <meta name="robots" content="noindex, nofollow"> -->
 		<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> -->
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	</head>
+	<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const mobileHideStyle = document.createElement('style');
+    mobileHideStyle.textContent = `
+        @media (max-width: 768px) {
+            #bubbleMap {
+                display: none !important;
+            }
+        }
+    `;
+
+    const tabs = document.querySelectorAll('.right-home__tabs div');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.click;
+            if (tabName === 'Bets' || tabName === 'Results') {
+                if (!document.head.contains(mobileHideStyle)) {
+                    document.head.appendChild(mobileHideStyle);
+                }
+            } else {
+                if (document.head.contains(mobileHideStyle)) {
+                    mobileHideStyle.remove();
+                }
+            }
+        });
+    });
+});
+</script>
+
 	<body>
-		<div class="wrapper">
+		<div class="wrapper index">
 			<header class="header">
 				<div class="header__container _container">
 					<div class="header__top">
@@ -392,7 +418,7 @@ header {
 						</div>
 						<div class="header__change">
 							<a href="index.html"> Markets</a>
-							<a href="community-markets.html" class="_active">Community Markets</a>
+							<a href="index.html" class="_active">Community Markets</a>
 
 							<div class="header__links">
 								<div>
@@ -505,283 +531,230 @@ header {
 			</header>
 			<main class="page">
 
-				<div class="leaderbord">
-					<div class="leaderbord__top-scroll">
-						<div class="leaderbord__top">
-							<div class="leaderbord__el">
-								<div>Rank</div>
-								<div>Model</div>
-								<div>Return %</div>
-								<div>Total P%L</div>
-								<div>Win Rate</div>
-								<div>Biggest Win</div>
-								<div>Biggest Loss</div>
-							</div>
-							<div class="leaderbord__el">
-								<div>1</div>
-								<div><img src="img/gpt-c.png" alt> GPT-5</div>
-								<div class="counter" data-value="8.4">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="839.68">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-								</div>
-								<div class="counter" data-value="12.">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="1490">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
+				<div class="home _hide js-full">
+					<div class="home__left  js-full">
 
-									<span style="display: none;" class="decimal-od"></span>
-								</div>
-								<div class="counter _minus" data-value="348.33">
-									<span class="symbol">-$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
+						<div id="bubbleMap" style="width:100%;height:50%;border:1px solid #ccc"></div>
+
+						<div class="home__bottom ai-chat">
+							<div class="ai-chat__top">
+								<span>Ask the AI why it made this bet</span>
+								<div class="ai-chat__dropdawn">
+									<div class="ai-chat__dropdawn-selest"><img src="img/gpt.png" alt> <span>GPT-5</span></div>
+									<ul>
+										<li><img src="img/gpt-c.png" alt> <span>GPT-5</span></li>
+										<li><img src="img/clause-c.png" alt><span>Claude Sonnet 4.5</span></li>
+										<li> <img src="img/gemeni-c.png" alt><span>Gemini 2.5 Pro</span></li>
+										<li><img src="img/grock-c.png" alt><span>Grok 4</span></li>
+										<li><img src="img/deepsick-c.png" alt><span>DeepSeek Chat V3.1</span></li>
+										<li><img src="img/quen-c.png" alt><span>Qwen3 Max</span></li>
+									</ul>
 								</div>
 							</div>
-							<div class="leaderbord__el">
-								<div>2</div>
-								<div><img src="img/deepsick-c.png" alt> DeepSeek</div>
-								<div class="counter" data-value="8.4">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="839.68">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-								</div>
-								<div class="counter" data-value="12.">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="1490">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
+							<div class="ai-chat__wp">
+								<div class="ai-chat__el _ai">
 
-									<span style="display: none;" class="decimal-od"></span>
 								</div>
-								<div class="counter _minus" data-value="348.33">
-									<span class="symbol">-$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
+								<div class="ai-chat__el _user">
+
 								</div>
 							</div>
-							<div class="leaderbord__el">
-								<div>3</div>
-								<div><img src="img/clause-c.png" alt> Claude</div>
-								<div class="counter" data-value="8.4">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="839.68">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-								</div>
-								<div class="counter" data-value="12.">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="1490">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
+							<div class="ai-chat__bottom">
+								<input placeholder="Type your message..." type="text">
+								<button>
+									Send
+									<svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16"
+										fill="none">
+										<path d="M14 7.99999L9.53674e-07 -6.11959e-07L3.21312 8L2.54292e-07 16L14 7.99999Z"
+											fill="#1D1D1D" />
+									</svg>
+								</button>
+							</div>
+						</div>
+					</div>
+					<div data-da=".home__left,998,1" class="home__right right-home js-full">
+						<div class="right-home__tabs">
+							<div class="_active" data-click="Bets">Bets</div>
+							<div data-click="Results">Results</div>
+						</div>
+						<div class="right-home__wp _bets _active">
 
-									<span style="display: none;" class="decimal-od"></span>
+							<div class="right-home__element">
+
+								<div class="right-home__top">BTC > 110K in 10 min</div>
+								<div class="right-home__user">
+									<span class="right-home__user-by">by</span>
+									<div class="right-home__user-info"><img src="img/avatarr.webp" alt> Nickname</div>
+									<a href="#" target="_blank" class="right-home__user-link"><img src="img/twitter-x.svg"
+											alt></a>
 								</div>
-								<div class="counter _minus" data-value="348.33">
-									<span class="symbol">-$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
+								<div class="right-home__wwp">
+									<div class="right-home__blur">
+										<img src="img/cec.png" alt>
+										<span>The event has ended</span>
+										<p>please check the "Result" tab</p>
+									</div>
+									<div class="right-home__timer" data-timer="1"><img src="img/Bold/Time/Clock Square.png"
+											alt>
+										<span></span>
+									</div>
+									<div class="right-home__info">
+										<div class="right-home__top-info">
+											<div>Model</div>
+											<div>Bet</div>
+											<div>Amount</div>
+										</div>
+										<ul class="right-home__list">
+											<li>
+												<div><img src="img/gpt-c.png" alt> GPT-5 </div>
+												<div><img src="img/ues.png" alt></div>
+
+												<!-- если нужно с анимацией  -->
+												<div>
+													<div class="counter" data-value="150">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+												<!-- если нужно с анимацией  -->
+
+												<!-- если нужно без анимациии  -->
+												<!-- <div>$250</div> -->
+												<!-- если нужно без анимациии  -->
+											</li>
+											<li>
+												<div><img src="img/deepsick-c.png" alt> DeepSeek </div>
+												<div><img src="img/no.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+											<li>
+												<div><img src="img/clause-c.png" alt> Claude </div>
+												<div><img src="img/ues.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+											<li>
+												<div><img src="img/grock-c.png" alt> Grok </div>
+												<div><img src="img/no.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+											<li>
+												<div><img src="img/gemeni-c.png" alt> Gemini </div>
+												<div><img src="img/ues.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+											<li>
+												<div><img src="img/quen-c.png" alt> Qwen </div>
+												<div><img src="img/no.png" alt></div>
+												<div>
+													<div class="counter" data-value="250">
+														<span class="symbol">$</span>
+														<span class="odometer">0</span>
+														<span style="display: none;" class="decimal-od"></span>
+													</div>
+												</div>
+											</li>
+										</ul>
+									</div>
 								</div>
 							</div>
-							<div class="leaderbord__el">
-								<div>4</div>
-								<div><img src="img/grock-c.png" alt> Grok</div>
-								<div class="counter" data-value="8.4">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
+						</div>
+						<div class="right-home__wp _results">
+							<div class="right-home__element">
+								<div class="right-home__top">BTC > 110K in 10 min</div>
+								<div class="right-home__user">
+									<span class="right-home__user-by">by</span>
+									<div class="right-home__user-info"><img src="img/avatarr.webp" alt> Nickname</div>
+									<a href="#" target="_blank" class="right-home__user-link"><img src="img/twitter-x.svg"
+											alt></a>
 								</div>
-								<div class="counter" data-value="839.68">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-								</div>
-								<div class="counter" data-value="12.">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="1490">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
+								<div class="right-home__info">
 
-									<span style="display: none;" class="decimal-od"></span>
-								</div>
-								<div class="counter _minus" data-value="348.33">
-									<span class="symbol">-$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
+									<ul class="right-home__list">
+										<li>
+											<div><img src="img/gpt-c.png" alt> GPT-5 </div>
+											<div class="counter" data-value="250">
+												<span class="symbol">+</span>
+												<span class="odometer">0</span>
+												<span style="display: none;" class="decimal-od"></span>
+											</div>
+										</li>
+										<li>
+											<div><img src="img/deepsick-c.png" alt> DeepSeek </div>
+
+											<div class="_red">-$250</div>
+										</li>
+										<li>
+											<div><img src="img/clause-c.png" alt> Claude </div>
+
+											<div class="counter" data-value="250">
+												<span class="symbol">+</span>
+												<span class="odometer">0</span>
+												<span style="display: none;" class="decimal-od"></span>
+											</div>
+										</li>
+										<li>
+											<div><img src="img/grock-c.png" alt> Grok </div>
+
+											<div class="counter" data-value="250">
+												<span class="symbol">+</span>
+												<span class="odometer">0</span>
+												<span style="display: none;" class="decimal-od"></span>
+											</div>
+										</li>
+										<li>
+											<div><img src="img/gemeni-c.png" alt> Gemini </div>
+
+											<div class="counter" data-value="250">
+												<span class="symbol">+</span>
+												<span class="odometer">0</span>
+												<span style="display: none;" class="decimal-od"></span>
+											</div>
+										</li>
+										<li>
+											<div><img src="img/quen-c.png" alt> Qwen </div>
+
+											<div class="counter" data-value="250">
+												<span class="symbol">+</span>
+												<span class="odometer">0</span>
+												<span style="display: none;" class="decimal-od"></span>
+											</div>
+										</li>
+									</ul>
 								</div>
 							</div>
-							<div class="leaderbord__el">
-								<div>5</div>
-								<div><img src="img/gemeni-c.png" alt> Gemini</div>
-								<div class="counter" data-value="8.4">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="839.68">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-								</div>
-								<div class="counter" data-value="12.">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="1490">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
+							<div class="right-home__element">
+								<div class="right-home__top">BTC > 110K in 10 min</div>
+								<div class="right-home__info">
 
-									<span style="display: none;" class="decimal-od"></span>
-								</div>
-								<div class="counter _minus" data-value="348.33">
-									<span class="symbol">-$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-								</div>
-							</div>
-							<div class="leaderbord__el">
-								<div>6</div>
-								<div><img src="img/quen-c.png" alt> Qwen</div>
-								<div class="counter" data-value="8.4">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="839.68">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-								</div>
-								<div class="counter" data-value="12.">
-									<span class="symbol">+</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
-									<span class="symbol">%</span>
-								</div>
-								<div class="counter" data-value="1490">
-									<span class="symbol">$</span>
-									<span class="odometer">0</span>
-
-									<span style="display: none;" class="decimal-od"></span>
-								</div>
-								<div class="counter _minus" data-value="348.33">
-									<span class="symbol">-$</span>
-									<span class="odometer">0</span>
-									<span>.</span>
-									<span class="decimal-od">00</span>
 								</div>
 							</div>
 						</div>
 					</div>
-					<div class="leaderbord__center">
-						<div class="leaderbord__procent">
-							<div>25k</div>
-							<div>20k</div>
-							<div>15k</div>
-							<div>10k</div>
-							<div style="opacity: 0;">0k</div>
-						</div>
-						<div class="leaderbord__element leaderbord__element_grock">
-							<img src="img/grock-c.png" alt>
-
-							<div style="--height: 0%;"></div>
-							<div></div>
-						</div>
-						<div class="leaderbord__element leaderbord__element_deepsick">
-							<img src="img/deepsick-c.png" alt>
-
-							<div style="--height: 0%;"></div>
-							<div></div>
-						</div>
-						<div class="leaderbord__element leaderbord__element_clause">
-							<img src="img/clause-c.png" alt>
-
-							<div style="--height: 0%;"></div>
-							<div></div>
-						</div>
-						<div class="leaderbord__element leaderbord__element_gpt">
-							<img src="img/gpt-c.png" alt>
-
-							<div style="--height: 0%;"></div>
-							<div></div>
-						</div>
-						<div class="leaderbord__element leaderbord__element_gemeni">
-							<img src="img/gemeni-c.png" alt>
-
-							<div style="--height: 0%;"></div>
-							<div></div>
-						</div>
-						<div class="leaderbord__element leaderbord__element_quen">
-							<img src="img/quen-c.png" alt>
-
-							<div style="--height: 0%;"></div>
-							<div></div>
-						</div>
-					</div>
-					<div class="leaderbord__bottom"><span>WINNING MODEL </span><img src="img/gpt.png" alt> GPT-5
-						<div>+8%</div></div>
 				</div>
 			</main>
 			<footer class="footer">
@@ -820,5 +793,6 @@ header {
 		<script src="js/vendors.min.js?v4"></script>
 		<script src="js/app.min.js"></script>
 		<script src="connect_back.js"></script>
+
 	</body>
 </html>

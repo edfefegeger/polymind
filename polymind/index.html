@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-	 <head>
-	<title>Polymind</title>
-	<meta charset="UTF-8">
-	<meta name="format-detection" content="telephone=no">
-	<link rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-default.min.css" />
-	<link rel="stylesheet" href="css/style.min.css?v4">
-	<link rel="shortcut icon" href="img/fav.png">
-	<style>
+	<head>
+		<title>Polymind</title>
+		<meta charset="UTF-8">
+		<meta name="format-detection" content="telephone=no">
+		<link rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-default.min.css" />
+		<link rel="stylesheet" href="css/style.min.css?v4">
+		<link rel="shortcut icon" href="img/fav.png">
+		<style>
 .header {
   background: #1d1d1d;
   position: relative;
@@ -369,11 +369,11 @@
 }
 
 </style>
-	<!-- <meta name="robots" content="noindex, nofollow"> -->
-	<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> -->
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<script>
+		<!-- <meta name="robots" content="noindex, nofollow"> -->
+		<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
+	<script>
 document.addEventListener('DOMContentLoaded', () => {
 
     const mobileHideStyle = document.createElement('style');
@@ -410,15 +410,25 @@ document.addEventListener('DOMContentLoaded', () => {
 					<div class="header__top">
 						<a href="index.html" class="header__logo"><img src="img/logo4.png" alt></a>
 						<div class="header__lang">
-       <input type="radio" checked name="lang" id="en">
-       <label for="en">EN</label>
-       <input type="radio" name="lang" id="ch">
-       <label for="ch">CH</label>
+							<input type="radio" checked name="lang" id="en">
+							<label for="en">EN</label>
+							<input type="radio" name="lang" id="ch">
+							<label for="ch">CH</label>
 
-      </div>
+						</div>
 						<div class="header__change">
-							<a href="index.html" class="_active">Markets</a>
-							<a href="leaderbord.html">Leaderboard</a>
+							<a href="index.html"> Markets</a>
+							<a href="community-markets.html" class="_active">Community Markets</a>
+
+							<div class="header__links">
+								<div>
+									<span>Leaderboard</span>
+									<ul>
+										<li><a href="leaderbord.html">Main</a></li>
+										<li><a href="leaderboard2.html">Community</a></li>
+									</ul>
+								</div>
+							</div>
 						</div>
 						<div class="header__links">
 							<div>
@@ -524,12 +534,8 @@ document.addEventListener('DOMContentLoaded', () => {
 				<div class="home _hide js-full">
 					<div class="home__left  js-full">
 
-								<div id="bubbleMap" style="width:100%;height:50%;border:1px solid #ccc"></div>
+						<div id="bubbleMap" style="width:100%;height:50%;border:1px solid #ccc"></div>
 
-
-
-		
-						
 						<div class="home__bottom ai-chat">
 							<div class="ai-chat__top">
 								<span>Ask the AI why it made this bet</span>
@@ -548,10 +554,8 @@ document.addEventListener('DOMContentLoaded', () => {
 							<div class="ai-chat__wp">
 								<div class="ai-chat__el _ai">
 
-
 								</div>
 								<div class="ai-chat__el _user">
-
 
 								</div>
 							</div>
@@ -577,7 +581,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 							<div class="right-home__element">
 
-							
 							</div>
 						</div>
 						<div class="right-home__wp _results">
@@ -642,7 +645,6 @@ document.addEventListener('DOMContentLoaded', () => {
 								<div class="right-home__top">BTC > 110K in 10 min</div>
 								<div class="right-home__info">
 
-									
 								</div>
 							</div>
 						</div>
@@ -650,41 +652,41 @@ document.addEventListener('DOMContentLoaded', () => {
 				</div>
 			</main>
 			<footer class="footer">
-	<div class="footer__container _container">
+				<div class="footer__container _container">
 
-	</div>
-</footer>
+				</div>
+			</footer>
 		</div>
 		<div class="popup popup_popup">
-	<div class="popup__content">
-		<div class="popup__body">
-			<div class="popup__close"></div>
+			<div class="popup__content">
+				<div class="popup__body">
+					<div class="popup__close"></div>
+				</div>
+			</div>
 		</div>
-	</div>
-</div>
-<div class="popup popup_massagename-message">
-	<div class="popup__content">
-		<div class="popup__body">
-			<div class="popup__close"></div>
+		<div class="popup popup_massagename-message">
+			<div class="popup__content">
+				<div class="popup__body">
+					<div class="popup__close"></div>
+				</div>
+			</div>
 		</div>
-	</div>
-</div>
-<div class="popup popup_video">
-	<div class="popup__content">
-		<div class="popup__body">
-			<div class="popup__close popup__close_video"></div>
-			<div class="popup__video _video"></div>
+		<div class="popup popup_video">
+			<div class="popup__content">
+				<div class="popup__body">
+					<div class="popup__close popup__close_video"></div>
+					<div class="popup__video _video"></div>
+				</div>
+			</div>
 		</div>
-	</div>
-</div>
 
 		<!-- Swiper -->
-<!-- <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script> -->
-<!-- <script src="https://unpkg.com/axios@1.1.2/dist/axios.min.js"></script> -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/odometer.min.js"></script>
-<script src="js/vendors.min.js?v4"></script>
-<script src="js/app.min.js"></script>
-<script src="connect_back.js"></script>
+		<!-- <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script> -->
+		<!-- <script src="https://unpkg.com/axios@1.1.2/dist/axios.min.js"></script> -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/odometer.min.js"></script>
+		<script src="js/vendors.min.js?v4"></script>
+		<script src="js/app.min.js"></script>
+		<script src="connect_back.js"></script>
 
 	</body>
 </html>

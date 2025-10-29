@@ -52,6 +52,7 @@ const TRANSLATIONS = {
         markets: "Markets",
         leaderboard: "Leaderboard",
         resources: "Resources",
+        communityMarkets: "Community Markets",
         community: "Community",
         askAI: "Ask the AI why it made this bet",
         availableBalances: "Available balances",
@@ -77,6 +78,7 @@ const TRANSLATIONS = {
         leaderboard: "排名",
         resources: "资源",
         community: "社区",
+        communityMarkets: "社区市场",
         askAI: "问AI为什么这样下注",
         availableBalances: "可用余额",
         rank: "排名",
@@ -115,56 +117,59 @@ function parseEventDescription(description, lang) {
     
     return description;
 }
-
 function updatePageTexts() {
     const t = TRANSLATIONS[currentLanguage];
     
+    // === Верхнее меню ===
     const marketLink = document.querySelector('.header__change a[href="index.html"]');
     if (marketLink) marketLink.textContent = t.markets;
-    
-    const leaderboardLink = document.querySelector('.header__change a[href="leaderbord.html"]');
-    if (leaderboardLink) leaderboardLink.textContent = t.leaderboard;
-    
-    const resourcesSpan = document.querySelector('.header__links > div:nth-child(1) > span');
-    if (resourcesSpan) {
-        resourcesSpan.childNodes[0].textContent = t.resources;
+
+    const communityMarketsLink = document.querySelector('.header__change a[href="community-markets.html"]');
+    if (communityMarketsLink) communityMarketsLink.textContent = t.communityMarkets;
+
+    // Leaderboard (верхнее раскрывающееся меню)
+    const leaderboardSpan = document.querySelector('.header__change .header__links span');
+    if (leaderboardSpan) leaderboardSpan.textContent = t.leaderboard;
+
+    // === Нижнее меню ===
+    const bottomLinks = document.querySelectorAll('.header > .header__container > .header__top > .header__links > div > span');
+    if (bottomLinks.length >= 2) {
+        bottomLinks[0].textContent = t.resources;
+        bottomLinks[1].textContent = t.community;
     }
-    
-    const communitySpan = document.querySelector('.header__links > div:nth-child(2) > span');
-    if (communitySpan) {
-        communitySpan.childNodes[0].textContent = t.community;
-    }
-    
+
+    // === Баланс и чат ===
     const headerName = document.querySelector('.header__name');
     if (headerName) headerName.textContent = t.availableBalances;
-    
+
     const aiChatTop = document.querySelector('.ai-chat__top span');
     if (aiChatTop) aiChatTop.textContent = t.askAI;
-    
+
     const chatInput = document.querySelector('.ai-chat__bottom input');
     if (chatInput) chatInput.placeholder = t.typeMessage;
-    
+
     const sendButton = document.querySelector('.ai-chat__bottom button');
     if (sendButton) {
         const svg = sendButton.querySelector('svg');
         sendButton.textContent = t.send + ' ';
         if (svg) sendButton.appendChild(svg);
     }
-    
+
+    // === Таблицы и подписи ===
     const tabBets = document.querySelector('.right-home__tabs div[data-click="Bets"]');
     if (tabBets) tabBets.textContent = t.bets;
-    
+
     const tabResults = document.querySelector('.right-home__tabs div[data-click="Results"]');
     if (tabResults) tabResults.textContent = t.results;
 
     document.querySelectorAll('.right-home__blur span').forEach(span => {
         span.textContent = t.eventEnded;
     });
-    
+
     document.querySelectorAll('.right-home__blur p').forEach(p => {
         p.textContent = t.checkResults;
     });
-    
+
     document.querySelectorAll('.right-home__top-info').forEach(topInfo => {
         const divs = topInfo.querySelectorAll('div');
         if (divs.length >= 3) {
@@ -173,36 +178,8 @@ function updatePageTexts() {
             divs[2].textContent = t.amount;
         }
     });
-    
-    const leaderboardHeaders = document.querySelectorAll('.leaderbord__top > div:first-child > div');
-    if (leaderboardHeaders.length >= 7) {
-        leaderboardHeaders[0].textContent = t.rank;
-        leaderboardHeaders[1].textContent = t.model;
-        leaderboardHeaders[2].textContent = t.returnPercent;
-        leaderboardHeaders[3].textContent = t.totalPnL;
-        leaderboardHeaders[4].textContent = t.winRate;
-        leaderboardHeaders[5].textContent = t.biggestWin;
-        leaderboardHeaders[6].textContent = t.biggestLoss;
-    }
-    
-    const winningModelText = document.querySelector('.leaderbord__bottom');
-    if (winningModelText) {
-        const img = winningModelText.querySelector('img');
-        const div = winningModelText.querySelector('div');
-        
-        const currentText = winningModelText.textContent || '';
-        const modelNameMatch = currentText.match(/\s+(GPT|Claude|Gemini|Grok|DeepSeek|Qwen)\s+/);
-        const modelName = modelNameMatch ? modelNameMatch[1] : '';
-        
-        winningModelText.textContent = '';
-        if (img) winningModelText.appendChild(img);
-        
-        const textNode = document.createTextNode(` ${t.winningModel} ${modelName} `);
-        winningModelText.appendChild(textNode);
-        
-        if (div) winningModelText.appendChild(div);
-    }
 }
+
 
 function updateEventsWithLanguage() {
 
@@ -1566,9 +1543,6 @@ if (window.MutationObserver) {
 
 
 setTimeout(adjustBubbleMapHeight, 1500);
-
-
-
 
 
 document.addEventListener('DOMContentLoaded', () => {
