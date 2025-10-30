@@ -42,9 +42,6 @@ const MODEL_CHART_CLASSES = {
     "Qwen Max": "leaderbord__element_quen"
 };
 
-// ============================================
-// Языковая система
-// ============================================
 const TRANSLATIONS = {
     en: {
         markets: "Markets",
@@ -69,8 +66,7 @@ const TRANSLATIONS = {
         eventEnded: "The event has ended",
         checkResults: "please check the \"Result\" tab",
         bets: "Bets",
-        results: "Results",
-        by: "by"
+        results: "Results"
     },
     ch: {
         markets: "市场",
@@ -95,8 +91,7 @@ const TRANSLATIONS = {
         eventEnded: "活动已结束",
         checkResults: "请查看\"结果\"标签",
         bets: "投注",
-        results: "结果",
-        by: "由"
+        results: "结果"
     }
 };
 
@@ -117,24 +112,27 @@ function parseEventDescription(description, lang) {
     
     return description;
 }
-
 function updatePageTexts() {
     const t = TRANSLATIONS[currentLanguage];
     
+
     const marketLink = document.querySelector('.header__change a[href="index.html"]');
     if (marketLink) marketLink.textContent = t.markets;
 
     const communityMarketsLink = document.querySelector('.header__change a[href="community-markets.html"]');
     if (communityMarketsLink) communityMarketsLink.textContent = t.communityMarkets;
 
+
     const leaderboardSpan = document.querySelector('.header__change .header__links span');
     if (leaderboardSpan) leaderboardSpan.textContent = t.leaderboard;
+
 
     const bottomLinks = document.querySelectorAll('.header > .header__container > .header__top > .header__links > div > span');
     if (bottomLinks.length >= 2) {
         bottomLinks[0].textContent = t.resources;
         bottomLinks[1].textContent = t.community;
     }
+
 
     const headerName = document.querySelector('.header__name');
     if (headerName) headerName.textContent = t.availableBalances;
@@ -151,6 +149,7 @@ function updatePageTexts() {
         sendButton.textContent = t.send + ' ';
         if (svg) sendButton.appendChild(svg);
     }
+
 
     const tabBets = document.querySelector('.right-home__tabs div[data-click="Bets"]');
     if (tabBets) tabBets.textContent = t.bets;
@@ -174,11 +173,8 @@ function updatePageTexts() {
             divs[2].textContent = t.amount;
         }
     });
-
-    document.querySelectorAll('.right-home__user-by').forEach(span => {
-        span.textContent = t.by;
-    });
 }
+
 
 function updateEventsWithLanguage() {
     document.querySelectorAll('.right-home__wp._bets .right-home__element').forEach(el => {
