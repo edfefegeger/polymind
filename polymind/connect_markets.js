@@ -66,7 +66,8 @@ const TRANSLATIONS = {
         eventEnded: "The event has ended",
         checkResults: "please check the \"Result\" tab",
         bets: "Bets",
-        results: "Results"
+        results: "Results",
+        by: "by"
     },
     ch: {
         markets: "市场",
@@ -91,7 +92,8 @@ const TRANSLATIONS = {
         eventEnded: "活动已结束",
         checkResults: "请查看\"结果\"标签",
         bets: "投注",
-        results: "结果"
+        results: "结果",
+        by: "由"
     }
 };
 
@@ -193,6 +195,9 @@ function updatePageTexts() {
     document.querySelectorAll('.right-home__blur p').forEach(p => {
         p.textContent = t.checkResults;
     });
+    document.querySelectorAll('.right-home__user-by').forEach(bySpan => {
+    bySpan.textContent = t.by;
+});
 
     document.querySelectorAll('.right-home__top-info').forEach(topInfo => {
         const divs = topInfo.querySelectorAll('div');
@@ -674,7 +679,7 @@ async function updateResultsTab() {
                             <span class="symbol">${symbol}$</span>
                             <span class="odometer">0</span>
                             <span style="display: none;" class="decimal-od"></span>
-                        </div>
+                        </div> 
                     </li>
                 `;
             }).join('');
