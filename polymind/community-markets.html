@@ -6,7 +6,7 @@
 		<meta name="format-detection" content="telephone=no">
 		<link rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-default.min.css" />
-		<link rel="stylesheet" href="css/style.min.css?v5">
+		<link rel="stylesheet" href="css/style.min.css?v4">
 		<link rel="shortcut icon" href="img/fav.png">
 		<style>
 .header {
@@ -367,7 +367,34 @@
 .home__bottom 
 {overflow: visible !important;
 }
-
+.home__bottom 
+{overflow: visible !important;
+}
+.header__links ul li a {
+    white-space: nowrap;
+}
+@media (max-width: 998px) {
+  @keyframes qw {
+    0% {
+      max-height: 1px;
+      opacity: 0;
+    }
+    50% {
+      opacity: 0;
+    }
+    70% {
+      max-height: 400px;
+    }
+    99% {
+      max-height: 400px;
+      opacity: 1;
+    }
+    100% {
+      max-height: 200%;
+      opacity: 1;
+    }
+  }
+}
 </style>
 		<!-- <meta name="robots" content="noindex, nofollow"> -->
 		<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> -->
@@ -579,23 +606,26 @@ document.addEventListener('DOMContentLoaded', () => {
 						</div>
 						<div class="right-home__wp _bets _active">
 
-							<div class="right-home__element">
-
-
-
-							</div>
+	
 						</div>
 						<div class="right-home__wp _results">
 							<div class="right-home__element">
-								<div class="right-home__top">BTC > 110K in 10 min</div>
-								<div class="right-home__user">
+								<div class="right-home__top"><span style="width: 100%;"></span> Winning Side</div>
+								<div class="right-home__top-text">Over 150,000 bidders in the MegaETH public sale?</div>
+								<!-- <div class="right-home__user">
 									<span class="right-home__user-by">by</span>
 									<div class="right-home__user-info"><img src="img/avatarr.webp" alt> Nickname</div>
 									<a href="#" target="_blank" class="right-home__user-link"><img src="img/twitter-x.svg"
 											alt></a>
-								</div>
+								</div> -->
 								<div class="right-home__info">
-
+									<div class="right-home__top-info _results">
+										<div>Model</div>
+										<div>Bet</div>
+										<div>Amount</div>
+										<div>roi</div>
+										<div>pnl</div>
+									</div>
 									<ul class="right-home__list">
 										<li>
 											<div><img src="img/gpt-c.png" alt> GPT-5 </div>
@@ -608,7 +638,11 @@ document.addEventListener('DOMContentLoaded', () => {
 										<li>
 											<div><img src="img/deepsick-c.png" alt> DeepSeek </div>
 
-											<div class="_red">-$250</div>
+											<div class="_red"><img src="img/yes.png" alt></div>
+
+											<div class="_red">$250</div>
+											<div class>250</div>
+											<div class="_red">250</div>
 										</li>
 										<li>
 											<div><img src="img/clause-c.png" alt> Claude </div>
@@ -647,6 +681,13 @@ document.addEventListener('DOMContentLoaded', () => {
 											</div>
 										</li>
 									</ul>
+								</div>
+								<div class="right-home__total">
+									<p>Total Volume</p>
+									<div>
+										<span>$250</span>
+										<span>$250</span>
+									</div>
 								</div>
 							</div>
 							<div class="right-home__element">
