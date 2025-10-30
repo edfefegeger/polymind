@@ -479,9 +479,18 @@ function addNewItems() {
         el.classList.add('_animation');
     });
 }
-
-
+// ============================================
+// Обновление вкладки Bets (Main Markets)
+// ============================================
 let lastBetsDataHash = "";
+
+async function digestMessage(message) {
+    const msgUint8 = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function updateBetsTab() {
     try {
         const [currentEvent, eventHistory] = await Promise.all([
@@ -503,151 +512,182 @@ async function updateBetsTab() {
             const eventId = el.getAttribute('data-event-id');
             if (eventId) existingEvents.set(eventId, el);
         });
-const createEventHTML = (event, isUpdate = false) => {
-    const now = new Date();
-    const endTime = new Date(event.end_time + 'Z');
-    const startTime = new Date(event.start_time + 'Z');
-    
-    let remainingSeconds = 0;
-    let showBlur = false;
 
-    if (event.status === "active") {
+        const createEventHTML = (event, isUpdate = false) => {
+            const now = new Date();
+            const endTime = new Date(event.end_time + 'Z');
+            const startTime = new Date(event.start_time + 'Z');
+            
+            let remainingSeconds = 0;
+            let showBlur = false;
 
-        remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
-        showBlur = false;
-        
-        console.log(`Event ${event.id}: now=${now.toISOString()}, endTime=${endTime.toISOString()}, remaining=${remainingSeconds}s`);
-        
-        const savedSeconds = parseInt(localStorage.getItem(`timer_${event.id}`));
-        if (!isNaN(savedSeconds) && savedSeconds > 0 && savedSeconds < remainingSeconds) {
+            if (event.status === "active") {
+                remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
+                showBlur = false;
+                
+                const savedSeconds = parseInt(localStorage.getItem(`timer_${event.id}`));
+                if (!isNaN(savedSeconds) && savedSeconds > 0 && savedSeconds < remainingSeconds) {
+                    remainingSeconds = savedSeconds;
+                }
+                
+                if (remainingSeconds < 5) {
+                    showBlur = true;
+                    remainingSeconds = 0;
+                }
+            } else if (event.status === "finished") {
+                remainingSeconds = 0;
+                showBlur = true;
+                localStorage.removeItem(`timer_${event.id}`);
+            } else if (event.status === "upcoming") {
+                remainingSeconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
+                showBlur = false;
+            }
 
-            remainingSeconds = savedSeconds;
-        }
-        
-        if (remainingSeconds < 5) {
-            showBlur = true;
-            remainingSeconds = 0;
-        }
-    } else if (event.status === "finished") {
-        remainingSeconds = 0;
-        showBlur = true;
-        localStorage.removeItem(`timer_${event.id}`);
-    } else if (event.status === "upcoming") {
-        remainingSeconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
-        showBlur = false;
-    }
+            // Рассчитываем Total Volume и соотношение YES/NO
+            let totalYes = 0;
+            let totalNo = 0;
+            let countYes = 0;
+            let countNo = 0;
+            
+            event.bets.forEach(bet => {
+                const amount = bet.amount || 0;
+                if (bet.side === 'YES') {
+                    totalYes += amount;
+                    countYes++;
+                } else if (bet.side === 'NO') {
+                    totalNo += amount;
+                    countNo++;
+                }
+            });
 
-    const betsHTML = event.bets.map(bet => {
-        const config = MODEL_CONFIG[bet.model_id];
-        if (!config) return '';
-        const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
-        const amount = bet.amount ?? 0;
-        return `
-            <li>
-                <div><img src="${config.img}" alt> ${config.name}</div>
-                <div><img src="${betImage}" alt></div>
-                <div>
-                    <div class="counter" data-value="${amount}">
-                        <span class="symbol">$</span>
-                        <span class="odometer">0</span>
-                        <span style="display: none;" class="decimal-od"></span>
+            const totalCount = countYes + countNo;
+            const noPercent = totalCount > 0 ? (countNo / totalCount) * 100 : 50;
+
+            const betsHTML = event.bets.map(bet => {
+                const config = MODEL_CONFIG[bet.model_id];
+                if (!config) return '';
+                
+                const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
+                const amount = bet.amount ?? 0;
+                
+                // Генерируем случайную уверенность от 36% до 97%
+                const confidence = Math.floor(Math.random() * (97 - 36 + 1)) + 36;
+                
+                return `
+                    <li>
+                        <div><img src="${config.img}" alt> ${config.name}</div>
+                        <div>${confidence}%</div>
+                        <div><img src="${betImage}" alt></div>
+                        <div>
+                            <div class="counter" data-value="${amount}">
+                                <span class="symbol">$</span>
+                                <span class="odometer">0</span>
+                                <span style="display: none;" class="decimal-od"></span>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+
+            const animationClass = isUpdate ? '' : '_animation';
+            const marketLink = event.market_link || '#';
+
+            return `
+                <div class="right-home__element ${animationClass}" data-event-id="${event.id}" data-original-description="${event.description}">
+                    <div class="right-home__top">
+                        <span class="_line-red" style="width: ${noPercent}%;"></span>
+                        ${parseEventDescription(event.description, currentLanguage)}
+                    </div>
+                    <div class="right-home__wwp">
+                        <div class="right-home__blur" style="display: ${showBlur ? 'flex' : 'none'}">
+                            <img src="img/cec.png" alt>
+                            <span>${TRANSLATIONS[currentLanguage].eventEnded}</span>
+                            <p>${TRANSLATIONS[currentLanguage].checkResults}</p>
+                        </div>
+                        <div class="right-home__timer" data-timer-seconds="${remainingSeconds}" data-event-id="${event.id}" data-event-status="${event.status}">
+                            <img src="img/Bold/Time/Clock Square.png" alt>
+                            <span></span>
+                            <a href="${marketLink}" target="_blank">Market link <img src="img/market.svg" alt></a>
+                        </div>
+                        <div class="right-home__info">
+                            <div class="right-home__top-info">
+                                <div>${TRANSLATIONS[currentLanguage].model}</div>
+                                <div>Confidence</div>
+                                <div>${TRANSLATIONS[currentLanguage].bet}</div>
+                                <div>${TRANSLATIONS[currentLanguage].amount}</div>
+                            </div>
+                            <ul class="right-home__list">
+                                ${betsHTML}
+                            </ul>
+                        </div>
+                        <div class="right-home__total">
+                            <p>Total Volume</p>
+                            <div>
+                                <span>$${totalYes.toFixed(2)}</span>
+                                <span>$${totalNo.toFixed(2)}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </li>
-        `;
-    }).join('');
+            `;
+        };
 
-    const animationClass = isUpdate ? '' : '_animation';
+        const processedEventIds = new Set();
+        const allEvents = [];
 
-    return `
-<div class="right-home__element ${animationClass}" data-event-id="${event.id}" data-original-description="${event.description}">
-    <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
-            <div class="right-home__wwp">
-                <div class="right-home__blur" style="display: ${showBlur ? 'flex' : 'none'}">
-                    <img src="img/cec.png" alt>
-<span>${TRANSLATIONS[currentLanguage].eventEnded}</span>
-<p>${TRANSLATIONS[currentLanguage].checkResults}</p>
-                </div>
-                <div class="right-home__timer" data-timer-seconds="${remainingSeconds}" data-event-id="${event.id}" data-event-status="${event.status}">
-                    <img src="img/Bold/Time/Clock Square.png" alt>
-                    <span></span>
-                </div>
-                <div class="right-home__info">
-<div class="right-home__top-info">
-    <div>${TRANSLATIONS[currentLanguage].model}</div>
-    <div>${TRANSLATIONS[currentLanguage].bet}</div>
-    <div>${TRANSLATIONS[currentLanguage].amount}</div>
-</div>
-                    <ul class="right-home__list">
-                        ${betsHTML}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    `;
-};
+        if (currentEvent && currentEvent.status === 'active') {
+            allEvents.push(currentEvent);
+        }
 
-const processedEventIds = new Set();
-const allEvents = [];
+        eventHistory.forEach(event => {
+            const isNotCurrentEvent = !currentEvent || event.id !== currentEvent.id;
+            const isVisible = event.status === 'active' || event.status === 'finished';
+            if (isNotCurrentEvent && isVisible) {
+                allEvents.push(event);
+            }
+        });
 
+        const statusOrder = {
+            active: 0,
+            upcoming: 1,
+            finished: 2
+        };
 
-if (currentEvent && currentEvent.status === 'active') {
-    allEvents.push(currentEvent);
-}
+        allEvents.sort((a, b) => {
+            const aStatus = statusOrder[a.status] ?? 3;
+            const bStatus = statusOrder[b.status] ?? 3;
 
-eventHistory.forEach(event => {
-    const isNotCurrentEvent = !currentEvent || event.id !== currentEvent.id;
-    const isVisible = event.status === 'active' || event.status === 'finished';
-    if (isNotCurrentEvent && isVisible) {
-        allEvents.push(event);
-    }
-});
+            if (aStatus !== bStatus) {
+                return aStatus - bStatus;
+            }
 
+            const aEnd = new Date(a.end_time + 'Z');
+            const bEnd = new Date(b.end_time + 'Z');
 
+            if (a.status === 'finished' && b.status === 'finished') {
+                return bEnd - aEnd; 
+            } else {
+                return aEnd - bEnd; 
+            }
+        });
 
-const statusOrder = {
-    active: 0,
-    upcoming: 1,
-    finished: 2
-};
+        allEvents.forEach(event => {
+            processedEventIds.add(event.id);
 
-allEvents.sort((a, b) => {
-    const aStatus = statusOrder[a.status] ?? 3;
-    const bStatus = statusOrder[b.status] ?? 3;
+            if (existingEvents.has(event.id)) {
+                const existingEl = existingEvents.get(event.id);
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = createEventHTML(event, true);
+                const newEl = tempDiv.firstElementChild;
 
-
-    if (aStatus !== bStatus) {
-        return aStatus - bStatus;
-    }
-
-    const aEnd = new Date(a.end_time + 'Z');
-    const bEnd = new Date(b.end_time + 'Z');
-
-    if (a.status === 'finished' && b.status === 'finished') {
-        return bEnd - aEnd; 
-    } else {
-        return aEnd - bEnd; 
-    }
-});
-
-
-allEvents.forEach(event => {
-    processedEventIds.add(event.id);
-
-    if (existingEvents.has(event.id)) {
-        const existingEl = existingEvents.get(event.id);
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = createEventHTML(event, true);
-        const newEl = tempDiv.firstElementChild;
-
-        existingEl.replaceWith(newEl);
-        setupHoverEffect(newEl);
-    } else {
-        betsContainer.insertAdjacentHTML('beforeend', createEventHTML(event, false));
-        const newEl = betsContainer.lastElementChild;
-        setupHoverEffect(newEl);
-    }
-});
+                existingEl.replaceWith(newEl);
+                setupHoverEffect(newEl);
+            } else {
+                betsContainer.insertAdjacentHTML('beforeend', createEventHTML(event, false));
+                const newEl = betsContainer.lastElementChild;
+                setupHoverEffect(newEl);
+            }
+        });
 
         existingEvents.forEach((el, eventId) => {
             if (!processedEventIds.has(eventId)) {
@@ -679,18 +719,9 @@ function setupHoverEffect(element) {
     });
 }
 
-
-async function digestMessage(message) {
-    const msgUint8 = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-setInterval(updateBetsTab, 5000);
-
-
-
+// ============================================
+// Обновление вкладки Results (Main Markets)
+// ============================================
 async function updateResultsTab() {
     try {
         const events = await fetch(`${API_URL}/events/history?limit=10`).then(r => r.json());
@@ -701,45 +732,87 @@ async function updateResultsTab() {
         
         resultsContainer.innerHTML = '';
         
-finishedEvents.forEach(event => {
-    const betsHTML = event.bets.map(bet => {
-        const config = MODEL_CONFIG[bet.model_id];
-        if (!config) return '';
+        finishedEvents.forEach(event => {
+            // Рассчитываем Total Volume
+            let totalYes = 0;
+            let totalNo = 0;
+            
+            event.bets.forEach(bet => {
+                const amount = bet.amount || 0;
+                if (bet.side === 'YES') {
+                    totalYes += amount;
+                } else if (bet.side === 'NO') {
+                    totalNo += amount;
+                }
+            });
 
-        const amount = bet.amount || 0;
-        let profit = bet.profit || 0;
+            const betsHTML = event.bets.map(bet => {
+                const config = MODEL_CONFIG[bet.model_id];
+                if (!config) return '';
 
- 
-        if (event.result && profit > 0 && profit > amount) {
-            profit -= amount;
-        }
+                const amount = bet.amount || 0;
+                let profit = bet.profit || 0;
 
-        const isPositive = profit >= 0;
-        const symbol = isPositive ? '+' : '-';
-        const cssClass = isPositive ? '' : '_red';
+                // Чистый профит (вычитаем ставку из прибыли если она есть)
+                if (event.result && profit > 0 && profit > amount) {
+                    profit -= amount;
+                }
 
-        return `
-            <li>
-                <div><img src="${config.img}" alt> ${config.name}</div>
-                <div class="counter ${cssClass}" data-value="${Math.abs(profit)}">
-                    <span class="symbol">${symbol}$</span>
-                    <span class="odometer">0</span>
-                    <span style="display: none;" class="decimal-od"></span>
+                // Рассчитываем ROI = (чистый профит / ставка) * 100%
+                const roi = amount > 0 ? (profit / amount) * 100 : 0;
+
+                const isPositive = profit >= 0;
+                const symbol = isPositive ? '+' : '-';
+                const cssClass = isPositive ? '' : '_red';
+                
+                const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
+
+                return `
+                    <li>
+                        <div><img src="${config.img}" alt> ${config.name}</div>
+                        <div class="${cssClass}"><img src="${betImage}" alt></div>
+                        <div class="${cssClass}">$${amount.toFixed(2)}</div>
+                        <div class="${cssClass}">${roi.toFixed(1)}%</div>
+                        <div class="counter ${cssClass}" data-value="${Math.abs(profit)}">
+                            <span class="symbol">${symbol}$</span>
+                            <span class="odometer">0</span>
+                            <span style="display: none;" class="decimal-od"></span>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+
+            // Определяем цвет для Winning Side
+            const winningClass = event.result?.toUpperCase() === 'YES' ? '' : '_line-red';
+
+            resultsContainer.innerHTML += `
+                <div class="right-home__element" data-original-description="${event.description}">
+                    <div class="right-home__top">
+                        <span class="${winningClass}" style="width: 100%;"></span>
+                        Winning Side
+                    </div>
+                    <div class="right-home__top-text">${parseEventDescription(event.description, currentLanguage)}</div>
+                    <div class="right-home__info">
+                        <div class="right-home__top-info _results">
+                            <div>Model</div>
+                            <div>Bet</div>
+                            <div>Amount</div>
+                            <div>ROI</div>
+                            <div>PNL</div>
+                        </div>
+                        <ul class="right-home__list">
+                            ${betsHTML}
+                        </ul>
+                    </div>
+                    <div class="right-home__total">
+                        <p>Total Volume</p>
+                        <div>
+                            <span>${'$'}${totalYes.toFixed(2)}</span>
+                            <span>${'$'}${totalNo.toFixed(2)}</span>
+                        </div>
+                    </div>
                 </div>
-            </li>
-        `;
-    }).join('');
-
-    resultsContainer.innerHTML += `
-        <div class="right-home__element" data-original-description="${event.description}">
-            <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
-            <div class="right-home__info">
-                <ul class="right-home__list">
-                    ${betsHTML}
-                </ul>
-            </div>
-        </div>
-    `;
+            `;
         });
         
         updateCounters();
@@ -748,6 +821,7 @@ finishedEvents.forEach(event => {
         console.error('Error updating results tab:', error);
     }
 }
+
 
 async function updateLeaderboard() {
     try {

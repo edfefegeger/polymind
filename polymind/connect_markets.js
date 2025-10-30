@@ -431,9 +431,8 @@ async function updateHeaderBalances() {
         console.error('Ошибка обновления балансов в шапке:', error);
     }
 }
-
 // ============================================
-// Обновление вкладки Bets
+// Обновление вкладки Bets (Community Markets)
 // ============================================
 let lastBetsDataHash = "";
 
@@ -496,14 +495,40 @@ async function updateBetsTab() {
                 showBlur = false;
             }
 
+            // Рассчитываем Total Volume и соотношение YES/NO
+            let totalYes = 0;
+            let totalNo = 0;
+            let countYes = 0;
+            let countNo = 0;
+            
+            event.bets.forEach(bet => {
+                const amount = bet.amount || 0;
+                if (bet.side === 'YES') {
+                    totalYes += amount;
+                    countYes++;
+                } else if (bet.side === 'NO') {
+                    totalNo += amount;
+                    countNo++;
+                }
+            });
+
+            const totalCount = countYes + countNo;
+            const noPercent = totalCount > 0 ? (countNo / totalCount) * 100 : 50;
+
             const betsHTML = event.bets.map(bet => {
                 const config = MODEL_CONFIG[bet.model_id];
                 if (!config) return '';
+                
                 const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
                 const amount = bet.amount ?? 0;
+                
+                // Генерируем случайную уверенность от 36% до 97%
+                const confidence = Math.floor(Math.random() * (97 - 36 + 1)) + 36;
+                
                 return `
                     <li>
                         <div><img src="${config.img}" alt> ${config.name}</div>
+                        <div>${confidence}%</div>
                         <div><img src="${betImage}" alt></div>
                         <div>
                             <div class="counter" data-value="${amount}">
@@ -525,7 +550,10 @@ async function updateBetsTab() {
 
             return `
                 <div class="right-home__element ${animationClass}" data-event-id="${event.id}" data-original-description="${event.description}">
-                    <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
+                    <div class="right-home__top">
+                        <span class="_line-red" style="width: ${noPercent}%;"></span>
+                        ${parseEventDescription(event.description, currentLanguage)}
+                    </div>
                     <div class="right-home__user">
                         <span class="right-home__user-by">${TRANSLATIONS[currentLanguage].by}</span>
                         <div class="right-home__user-info"><img src="${avatarUrl}" alt> ${username}</div>
@@ -537,19 +565,32 @@ async function updateBetsTab() {
                             <span>${TRANSLATIONS[currentLanguage].eventEnded}</span>
                             <p>${TRANSLATIONS[currentLanguage].checkResults}</p>
                         </div>
-                        <div class="right-home__timer" data-timer-seconds="${remainingSeconds}" data-event-id="${event.id}" data-event-status="${event.status}">
+                        <div class="right-home__timer _link-x" data-timer-seconds="${remainingSeconds}" data-event-id="${event.id}" data-event-status="${event.status}">
                             <img src="img/Bold/Time/Clock Square.png" alt>
                             <span></span>
+                            <div class="right-home__user">
+                                <div class="right-home__user-by">${TRANSLATIONS[currentLanguage].by}</div>
+                                <div class="right-home__user-info"><img src="${avatarUrl}" alt> ${username}</div>
+                                <a href="${twitterLink}" target="_blank" class="right-home__user-link"><img src="img/twitter-x.svg" alt></a>
+                            </div>
                         </div>
                         <div class="right-home__info">
                             <div class="right-home__top-info">
                                 <div>${TRANSLATIONS[currentLanguage].model}</div>
+                                <div>Confidence</div>
                                 <div>${TRANSLATIONS[currentLanguage].bet}</div>
                                 <div>${TRANSLATIONS[currentLanguage].amount}</div>
                             </div>
                             <ul class="right-home__list">
                                 ${betsHTML}
                             </ul>
+                        </div>
+                        <div class="right-home__total">
+                            <p>Total Volume</p>
+                            <div>
+                                <span>$${totalYes.toFixed(2)}</span>
+                                <span>$${totalNo.toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -644,7 +685,7 @@ function setupHoverEffect(element) {
 }
 
 // ============================================
-// Обновление вкладки Results
+// Обновление вкладки Results (Community Markets)
 // ============================================
 async function updateResultsTab() {
     try {
@@ -657,6 +698,19 @@ async function updateResultsTab() {
         resultsContainer.innerHTML = '';
         
         finishedEvents.forEach(event => {
+            // Рассчитываем Total Volume
+            let totalYes = 0;
+            let totalNo = 0;
+            
+            event.bets.forEach(bet => {
+                const amount = bet.amount || 0;
+                if (bet.side === 'YES') {
+                    totalYes += amount;
+                } else if (bet.side === 'NO') {
+                    totalNo += amount;
+                }
+            });
+
             const betsHTML = event.bets.map(bet => {
                 const config = MODEL_CONFIG[bet.model_id];
                 if (!config) return '';
@@ -664,17 +718,26 @@ async function updateResultsTab() {
                 const amount = bet.amount || 0;
                 let profit = bet.profit || 0;
 
+                // Чистый профит (вычитаем ставку из прибыли если она есть)
                 if (event.result && profit > 0 && profit > amount) {
                     profit -= amount;
                 }
 
+                // Рассчитываем ROI = (чистый профит / ставка) * 100%
+                const roi = amount > 0 ? (profit / amount) * 100 : 0;
+
                 const isPositive = profit >= 0;
                 const symbol = isPositive ? '+' : '-';
                 const cssClass = isPositive ? '' : '_red';
+                
+                const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
 
                 return `
                     <li>
                         <div><img src="${config.img}" alt> ${config.name}</div>
+                        <div class="${cssClass}"><img src="${betImage}" alt></div>
+                        <div class="${cssClass}">$${amount.toFixed(2)}</div>
+                        <div class="${cssClass}">${roi.toFixed(1)}%</div>
                         <div class="counter ${cssClass}" data-value="${Math.abs(profit)}">
                             <span class="symbol">${symbol}$</span>
                             <span class="odometer">0</span>
@@ -688,18 +751,39 @@ async function updateResultsTab() {
             const twitterLink = event.twitter_link || '#';
             const username = event.username || 'Anonymous';
 
+            // Определяем цвет для Winning Side
+            const winningClass = event.result?.toUpperCase() === 'YES' ? '' : '_line-red';
+
             resultsContainer.innerHTML += `
                 <div class="right-home__element" data-original-description="${event.description}">
-                    <div class="right-home__top">${parseEventDescription(event.description, currentLanguage)}</div>
+                    <div class="right-home__top">
+                        <span class="${winningClass}" style="width: 100%;"></span>
+                        Winning Side
+                    </div>
+                    <div class="right-home__top-text">${parseEventDescription(event.description, currentLanguage)}</div>
                     <div class="right-home__user">
                         <span class="right-home__user-by">${TRANSLATIONS[currentLanguage].by}</span>
                         <div class="right-home__user-info"><img src="${avatarUrl}" alt> ${username}</div>
                         <a href="${twitterLink}" target="_blank" class="right-home__user-link"><img src="img/twitter-x.svg" alt></a>
                     </div>
                     <div class="right-home__info">
+                        <div class="right-home__top-info _results">
+                            <div>Model</div>
+                            <div>Bet</div>
+                            <div>Amount</div>
+                            <div>ROI</div>
+                            <div>PNL</div>
+                        </div>
                         <ul class="right-home__list">
                             ${betsHTML}
                         </ul>
+                    </div>
+                    <div class="right-home__total">
+                        <p>Total Volume</p>
+                        <div>
+                            <span>${'$'}${totalYes.toFixed(2)}</span>
+                            <span>${'$'}${totalNo.toFixed(2)}</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -711,6 +795,7 @@ async function updateResultsTab() {
         console.error('Ошибка обновления вкладки Results:', error);
     }
 }
+
 
 // ============================================
 // Обновление Leaderboard (для leaderboard2.html)

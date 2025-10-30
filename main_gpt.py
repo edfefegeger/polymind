@@ -9,7 +9,7 @@ import openai
 
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime, Enum
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base, joinedload
-
+from sqlalchemy import inspect, text
 import uvicorn
 
 # Load environment variables
@@ -62,6 +62,7 @@ class Event(Base):
     __tablename__ = "events"
     id = Column(Integer, primary_key=True, autoincrement=True)
     description = Column(String)
+    market_link = Column(String, nullable=True)
     start_time = Column(DateTime, default=datetime.utcnow)
     end_time = Column(DateTime)
     status = Column(String, default="upcoming")
@@ -139,6 +140,7 @@ class BetSchema(BaseModel):
 class EventSchema(BaseModel):
     id: int
     description: str
+    market_link: Optional[str] = None
     start_time: datetime
     end_time: datetime
     status: str
@@ -186,6 +188,7 @@ class BubbleMapItem(BaseModel):
 
 class EventCreateSchema(BaseModel):
     description: str
+    market_link: Optional[str] = None
     duration_minutes: Optional[int] = 10
     start_in_seconds: Optional[int] = 0
 
@@ -306,11 +309,36 @@ You are a highly efficient and intelligent betting AI. When making predictions o
 
 Your personality: Efficient, decisive, results-oriented. You maximize value in every prediction.""" 
 }
-
 # -------------------------
 # Initialize models
 # -------------------------
 MODEL_NAMES = ["GPT", "Claude", "Gemini Pro", "Grok", "DeepSeek", "Qwen Max"]
+
+def migrate_database():
+    """Миграция базы данных без потери данных"""
+    inspector = inspect(engine)
+    
+    # Проверяем существование таблицы events
+    if 'events' in inspector.get_table_names():
+        columns = [col['name'] for col in inspector.get_columns('events')]
+        
+        # Добавляем market_link если его нет
+        if 'market_link' not in columns:
+            print("🔄 Migrating: Adding market_link column to events table...")
+            with engine.connect() as conn:
+                conn.execute(text('ALTER TABLE events ADD COLUMN market_link TEXT'))
+                conn.commit()
+            print("✅ Migration completed successfully!")
+        else:
+            print("✓ market_link column already exists")
+    else:
+        print("✓ Events table doesn't exist yet")
+
+# Всегда создаём таблицы (create_all безопасна - не перезаписывает существующие)
+Base.metadata.create_all(bind=engine)
+
+# Запускаем миграцию (она сама проверит нужно ли что-то делать)
+migrate_database()
 
 # Initialize Main Markets models
 db = SessionLocal()
@@ -465,6 +493,7 @@ def get_current_event():
         return EventSchema(
             id=event.id,
             description=event.description,
+            market_link=event.market_link,
             start_time=event.start_time,
             end_time=event.end_time,
             status=event.status,
@@ -488,6 +517,7 @@ def get_event_history(limit: int = 50):
         result.append(EventSchema(
             id=e.id,
             description=e.description,
+            market_link=e.market_link,  
             start_time=e.start_time,
             end_time=e.end_time,
             status=e.status,
@@ -525,6 +555,7 @@ def add_event(event_data: EventCreateSchema):
     db = SessionLocal()
     event = Event(
         description=event_data.description,
+        market_link=event_data.market_link,
         start_time=datetime.utcnow(),
         end_time=datetime.utcnow() + timedelta(minutes=event_data.duration_minutes),
         start_in_seconds=event_data.start_in_seconds,

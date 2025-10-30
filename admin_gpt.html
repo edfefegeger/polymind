@@ -235,6 +235,17 @@ tr:hover {
   display: block;
 }
 
+.main-market-fields {
+  display: block;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.main-market-fields.hidden {
+  display: none;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -289,6 +300,15 @@ tr:hover {
       <label>Start Delay (seconds)
         <input id="eventStartDelay" type="number" value="0" min="0" />
         <div class="small">Delay before event becomes ACTIVE</div>
+      </label>
+    </div>
+
+    <div id="mainMarketFields" class="main-market-fields">
+      <h3 style="margin-bottom: 15px; font-size: 18px;">🔗 Main Market Settings</h3>
+      
+      <label>Polymarket Link (optional)
+        <input id="marketLink" type="url" placeholder="https://polymarket.com/event/..." />
+        <div class="small">Link to Polymarket event (will appear on the event card)</div>
       </label>
     </div>
 
@@ -347,6 +367,7 @@ function switchMarket(market) {
   const mainBtn = document.getElementById('mainMarketBtn');
   const communityBtn = document.getElementById('communityMarketBtn');
   const communityFields = document.getElementById('communityFields');
+  const mainMarketFields = document.getElementById('mainMarketFields');
   const createTitle = document.getElementById('createTitle');
   const eventsTitle = document.getElementById('eventsTitle');
   const tableHeader = document.getElementById('tableHeader');
@@ -355,6 +376,7 @@ function switchMarket(market) {
     mainBtn.classList.add('active');
     communityBtn.classList.remove('active');
     communityFields.classList.remove('visible');
+    mainMarketFields.classList.remove('hidden');
     createTitle.textContent = '➕ Create New Main Market Event';
     eventsTitle.textContent = '📋 Main Market Events';
     
@@ -372,6 +394,7 @@ function switchMarket(market) {
     mainBtn.classList.remove('active');
     communityBtn.classList.add('active');
     communityFields.classList.add('visible');
+    mainMarketFields.classList.add('hidden');
     createTitle.textContent = '➕ Create New Community Market Event';
     eventsTitle.textContent = '📋 Community Market Events';
     
@@ -418,7 +441,13 @@ async function createNewEvent() {
     start_in_seconds: startDelay
   };
 
-  if (currentMarket === 'community') {
+  if (currentMarket === 'main') {
+    const marketLink = document.getElementById("marketLink").value.trim();
+    // Всегда добавляем market_link, даже если пустое
+    payload.market_link = marketLink || "";
+    
+    console.log("Creating main market event with payload:", payload);
+  } else {
     const username = document.getElementById("communityUsername").value.trim();
     const twitter = document.getElementById("communityTwitter").value.trim();
     const avatar = document.getElementById("communityAvatar").value.trim();
@@ -436,6 +465,8 @@ async function createNewEvent() {
     payload.username = username;
     payload.twitter_link = twitter;
     payload.avatar_url = avatar || "img/avatarr.webp";
+    
+    console.log("Creating community market event with payload:", payload);
   }
 
   try {
@@ -446,7 +477,9 @@ async function createNewEvent() {
       body: JSON.stringify(payload)
     });
 
-    await safeJson(res);
+    const result = await safeJson(res);
+    console.log("Server response:", result);
+    
     alert("Event created successfully!");
     
     // Clear form
@@ -455,7 +488,9 @@ async function createNewEvent() {
     document.getElementById("eventDuration").value = "10";
     document.getElementById("eventStartDelay").value = "0";
     
-    if (currentMarket === 'community') {
+    if (currentMarket === 'main') {
+      document.getElementById("marketLink").value = "";
+    } else {
       document.getElementById("communityUsername").value = "";
       document.getElementById("communityTwitter").value = "";
       document.getElementById("communityAvatar").value = "";
@@ -483,6 +518,11 @@ async function loadEvents() {
     }
 
     events.forEach(ev => {
+      // Для отладки - выводим данные события
+      if (currentMarket === 'main') {
+        console.log(`Event ${ev.id} market_link:`, ev.market_link);
+      }
+      
       const totalYes = ev.total_yes || 0;
       const totalNo = ev.total_no || 0;
       const tr = document.createElement('tr');
@@ -498,8 +538,8 @@ async function loadEvents() {
           <td>${Math.round((new Date(ev.end_time) - new Date(ev.start_time)) / 60000)} min</td>
           <td><span class="status-badge status-${ev.status}">${ev.status}</span></td>
           <td>
-            YES: $${totalYes.toFixed(2)}<br>
-            NO: $${totalNo.toFixed(2)}
+            YES: ${totalYes.toFixed(2)}<br>
+            NO: ${totalNo.toFixed(2)}
           </td>
           <td>${ev.result || '-'}</td>
           <td class="actions">
@@ -510,14 +550,21 @@ async function loadEvents() {
           </td>
         `;
       } else {
+        const marketLinkHtml = ev.market_link && ev.market_link.trim() !== '' 
+          ? `<br><a href="${ev.market_link}" target="_blank" style="color: #51cf66; font-size: 11px;">🔗 Polymarket</a>` 
+          : '';
+          
         tr.innerHTML = `
           <td>${ev.id}</td>
-          <td>${ev.description}</td>
+          <td>
+            ${ev.description}
+            ${marketLinkHtml}
+          </td>
           <td>${Math.round((new Date(ev.end_time) - new Date(ev.start_time)) / 60000)} min</td>
           <td><span class="status-badge status-${ev.status}">${ev.status}</span></td>
           <td>
-            YES: $${totalYes.toFixed(2)}<br>
-            NO: $${totalNo.toFixed(2)}
+            YES: ${totalYes.toFixed(2)}<br>
+            NO: ${totalNo.toFixed(2)}
           </td>
           <td>${ev.result || '-'}</td>
           <td class="actions">
