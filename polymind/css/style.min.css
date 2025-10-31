@@ -3386,3 +3386,15 @@ body.ie ._ibg img {
 .right-home__top span._line-red {
   background: #ff7b59; 
 }
+
+.counter { 
+  .odometer-digit-inner { 
+    display: flex !important; 
+    align-items: center; 
+  } 
+  .odometer-animating { 
+    .odometer-digit-inner { 
+      display: block !important; 
+    } 
+  } 
+}
