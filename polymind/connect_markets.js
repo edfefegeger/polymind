@@ -543,11 +543,7 @@ async function updateBetsTab() {
                         <span class="_line-red" style="width: ${noPercent}%;"></span>
                         ${parseEventDescription(event.description, currentLanguage)}
                     </div>
-                    <div class="right-home__user">
-                        <span class="right-home__user-by">${TRANSLATIONS[currentLanguage].by}</span>
-                        <div class="right-home__user-info"><img src="${avatarUrl}" alt> ${username}</div>
-                        <a href="${twitterLink}" target="_blank" class="right-home__user-link"><img src="img/twitter-x.svg" alt></a>
-                    </div>
+
                     <div class="right-home__wwp">
                         <div class="right-home__blur" style="display: ${showBlur ? 'flex' : 'none'}">
                             <img src="img/cec.png" alt>
