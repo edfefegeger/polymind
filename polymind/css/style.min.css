@@ -3353,10 +3353,27 @@ body.ie ._ibg img {
 .right-home__user-link img {
   width: 100%;
 }
+
+
+
+
 @media (max-width: 998px) { 
   .right-home__top-text { 
     font-size: 15px; 
     padding: 10px; 
     line-height: 1.2; 
   } 
+}
+.right-home__wp._results .right-home__list li { 
+  display: grid; 
+  grid-template-columns: 1.9fr 0.7fr 1fr 1fr 1fr; 
+  gap: 7px; 
+  font-size: 13.5px; 
+}
+
+
+.right-home__top-info._results { 
+  gap: 7px; 
+  grid-template-columns: 1.8fr 0.8fr 1fr 1fr 1fr; 
+  font-size: 14px; 
 }
