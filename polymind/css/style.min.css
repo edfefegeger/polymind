@@ -3398,3 +3398,13 @@ body.ie ._ibg img {
     } 
   } 
 }
+.right-home__timer { 
+  display: flex; 
+  align-items: center; 
+  background: #567bff; 
+  padding: 0.4vw 1vw; 
+  color: #fff; 
+  font-size: 0.8vw; 
+  gap: 10px; 
+  padding-top: 0.5vw; 
+}
