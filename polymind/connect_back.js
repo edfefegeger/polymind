@@ -236,6 +236,7 @@ topDiv.innerHTML = '';
 if (lineSpan) topDiv.appendChild(lineSpan);
 topDiv.appendChild(document.createTextNode(' ' + descriptionText));
 
+
     });
     
     document.querySelectorAll('.right-home__wp._results .right-home__element').forEach(el => {
