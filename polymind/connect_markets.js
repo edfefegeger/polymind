@@ -271,9 +271,7 @@ window.getCurrentLanguage = () => currentLanguage;
 window.TRANSLATIONS = TRANSLATIONS;
 window.currentLanguage = currentLanguage;
 
-// ============================================
-// Обновление счетчиков с анимацией
-// ============================================
+
 function updateCounters() {
     const counters = document.querySelectorAll('.counter');
     counters.forEach(counter => {
@@ -325,9 +323,7 @@ function initTextAnimation(element, text) {
     typeWriter();
 }
 
-// ============================================
-// Обновление таймеров
-// ============================================
+
 function updateTimers() {
     const timers = document.querySelectorAll('[data-timer-seconds]');
 
@@ -388,9 +384,7 @@ function updateTimers() {
     });
 }
 
-// ============================================
-// Обновление балансов в шапке
-// ============================================
+
 async function updateHeaderBalances() {
     try {
         const response = await fetch(`${COMMUNITY_API_URL}/models`);
@@ -431,9 +425,7 @@ async function updateHeaderBalances() {
         console.error('Ошибка обновления балансов в шапке:', error);
     }
 }
-// ============================================
-// Обновление вкладки Bets (Community Markets)
-// ============================================
+
 let lastBetsDataHash = "";
 
 async function digestMessage(message) {
@@ -495,7 +487,6 @@ async function updateBetsTab() {
                 showBlur = false;
             }
 
-            // Рассчитываем Total Volume и соотношение YES/NO
             let totalYes = 0;
             let totalNo = 0;
             let countYes = 0;
@@ -521,8 +512,7 @@ async function updateBetsTab() {
                 
                 const betImage = bet.side === 'YES' ? 'img/ues.png' : 'img/no.png';
                 const amount = bet.amount ?? 0;
-                
-                // Генерируем случайную уверенность от 36% до 97%
+
                 const confidence = Math.floor(Math.random() * (97 - 36 + 1)) + 36;
                 
                 return `
@@ -543,7 +533,6 @@ async function updateBetsTab() {
 
             const animationClass = isUpdate ? '' : '_animation';
             
-            // Получаем аватар и Twitter ссылку
             const avatarUrl = event.avatar_url || 'img/avatarr.webp';
             const twitterLink = event.twitter_link || '#';
             const username = event.username || 'Anonymous';
@@ -684,9 +673,6 @@ function setupHoverEffect(element) {
     });
 }
 
-// ============================================
-// Обновление вкладки Results (Community Markets)
-// ============================================
 async function updateResultsTab() {
     try {
         const events = await fetch(`${COMMUNITY_API_URL}/events/history?limit=10`).then(r => r.json());
@@ -698,7 +684,7 @@ async function updateResultsTab() {
         resultsContainer.innerHTML = '';
         
         finishedEvents.forEach(event => {
-            // Рассчитываем Total Volume
+
             let totalYes = 0;
             let totalNo = 0;
             
@@ -718,12 +704,10 @@ async function updateResultsTab() {
                 const amount = bet.amount || 0;
                 let profit = bet.profit || 0;
 
-                // Чистый профит (вычитаем ставку из прибыли если она есть)
                 if (event.result && profit > 0 && profit > amount) {
                     profit -= amount;
                 }
 
-                // Рассчитываем ROI = (чистый профит / ставка) * 100%
                 const roi = amount > 0 ? (profit / amount) * 100 : 0;
 
                 const isPositive = profit >= 0;
@@ -751,8 +735,9 @@ async function updateResultsTab() {
             const twitterLink = event.twitter_link || '#';
             const username = event.username || 'Anonymous';
 
-            // Определяем цвет для Winning Side
-            const winningClass = event.result?.toUpperCase() === 'YES' ? '' : '_line-red';
+
+            const resultUpper = event.result?.toUpperCase();
+            const winningClass = resultUpper === 'YES' ? '' : '_line-red';
 
             resultsContainer.innerHTML += `
                 <div class="right-home__element" data-original-description="${event.description}">
@@ -797,9 +782,7 @@ async function updateResultsTab() {
 }
 
 
-// ============================================
-// Обновление Leaderboard (для leaderboard2.html)
-// ============================================
+
 async function updateLeaderboard() {
     try {
         const leaderboard = await fetch(`${COMMUNITY_API_URL}/leaderboard`).then(r => r.json());

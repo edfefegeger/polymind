@@ -3357,6 +3357,8 @@ body.ie ._ibg img {
 
 
 
+
+
 @media (max-width: 998px) { 
   .right-home__top-text { 
     font-size: 15px; 
@@ -3376,4 +3378,11 @@ body.ie ._ibg img {
   gap: 7px; 
   grid-template-columns: 1.8fr 0.8fr 1fr 1fr 1fr; 
   font-size: 14px; 
+}
+.right-home__top span {
+  background-color: #b9ea87;
+}
+
+.right-home__top span._line-red {
+  background: #ff7b59; 
 }

@@ -719,9 +719,6 @@ function setupHoverEffect(element) {
     });
 }
 
-// ============================================
-// Обновление вкладки Results (Main Markets)
-// ============================================
 async function updateResultsTab() {
     try {
         const events = await fetch(`${API_URL}/events/history?limit=10`).then(r => r.json());
@@ -733,7 +730,7 @@ async function updateResultsTab() {
         resultsContainer.innerHTML = '';
         
         finishedEvents.forEach(event => {
-            // Рассчитываем Total Volume
+
             let totalYes = 0;
             let totalNo = 0;
             
@@ -753,12 +750,11 @@ async function updateResultsTab() {
                 const amount = bet.amount || 0;
                 let profit = bet.profit || 0;
 
-                // Чистый профит (вычитаем ставку из прибыли если она есть)
                 if (event.result && profit > 0 && profit > amount) {
                     profit -= amount;
                 }
 
-                // Рассчитываем ROI = (чистый профит / ставка) * 100%
+
                 const roi = amount > 0 ? (profit / amount) * 100 : 0;
 
                 const isPositive = profit >= 0;
@@ -782,8 +778,9 @@ async function updateResultsTab() {
                 `;
             }).join('');
 
-            // Определяем цвет для Winning Side
-            const winningClass = event.result?.toUpperCase() === 'YES' ? '' : '_line-red';
+
+            const resultUpper = event.result?.toUpperCase();
+            const winningClass = resultUpper === 'YES' ? '' : '_line-red';
 
             resultsContainer.innerHTML += `
                 <div class="right-home__element" data-original-description="${event.description}">
@@ -821,8 +818,6 @@ async function updateResultsTab() {
         console.error('Error updating results tab:', error);
     }
 }
-
-
 async function updateLeaderboard() {
     try {
         const leaderboard = await fetch(`${API_URL}/leaderboard`).then(r => r.json());
