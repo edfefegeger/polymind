@@ -3353,3 +3353,10 @@ body.ie ._ibg img {
 .right-home__user-link img {
   width: 100%;
 }
+@media (max-width: 998px) { 
+  .right-home__top-text { 
+    font-size: 15px; 
+    padding: 10px; 
+    line-height: 1.2; 
+  } 
+}
