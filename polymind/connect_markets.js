@@ -781,8 +781,6 @@ async function updateResultsTab() {
     }
 }
 
-
-
 async function updateLeaderboard() {
     try {
         const leaderboard = await fetch(`${COMMUNITY_API_URL}/leaderboard`).then(r => r.json());
@@ -913,6 +911,7 @@ async function updateLeaderboard() {
         console.error('Ошибка обновления leaderboard:', error);
     }
 }
+
 
 // ============================================
 // AI Chat Integration
