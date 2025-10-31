@@ -3408,3 +3408,9 @@ body.ie ._ibg img {
   gap: 10px; 
   padding-top: 0.5vw; 
 }
+
+
+    .right-home__timer {
+        font-size: 14px;
+        padding: 5px 10px;
+    }
