@@ -151,7 +151,7 @@ function updatePageTexts() {
         sendButton.textContent = t.send + ' ';
         if (svg) sendButton.appendChild(svg);
     }
-    // --- Leaderboard section ---
+
     const leaderboardHeaders = document.querySelectorAll('.leaderbord__el > div');
     if (leaderboardHeaders.length >= 7) {
         leaderboardHeaders[0].textContent = t.rank;
@@ -163,15 +163,14 @@ function updatePageTexts() {
         leaderboardHeaders[6].textContent = t.biggestLoss;
     }
 
-    // --- "Winning model" text ---
     const winningModelSpan = document.querySelector('.leaderbord__bottom span');
     if (winningModelSpan) {
         winningModelSpan.textContent = t.winningModel;
     }
-            // --- Leaderboard dropdown links ---
+
     const leaderboardMenuLinks = document.querySelectorAll('.header__links ul li a');
     if (leaderboardMenuLinks.length >= 2) {
-        // Main
+
         if (currentLanguage === 'en') {
             leaderboardMenuLinks[0].textContent = 'Main';
             leaderboardMenuLinks[1].textContent = 'Community';
@@ -211,45 +210,43 @@ function updatePageTexts() {
 
 
 function updateEventsWithLanguage() {
+
     document.querySelectorAll('.right-home__wp._bets .right-home__element').forEach(el => {
-const topDiv = el.querySelector('.right-home__top');
-if (!topDiv) return;
-
-// сохраняем описание отдельно от HTML
-if (!el.dataset.originalDescription) {
-    // берём только текст без полосы
-    const span = topDiv.querySelector('span');
-    const text = topDiv.cloneNode(true);
-    if (span) text.removeChild(span);
-    el.dataset.originalDescription = text.textContent.trim();
-}
-
-// оставляем линию нетронутой
-const lineSpan = topDiv.querySelector('span');
-const descriptionText = parseEventDescription(el.dataset.originalDescription, currentLanguage);
-
-// очищаем текст после линии, но не трогаем саму линию
-topDiv.innerHTML = '';
-if (lineSpan) topDiv.appendChild(lineSpan);
-topDiv.appendChild(document.createTextNode(' ' + descriptionText));
-
-
-// очищаем текст после линии, но не трогаем саму линию
-topDiv.innerHTML = '';
-if (lineSpan) topDiv.appendChild(lineSpan);
-topDiv.appendChild(document.createTextNode(' ' + descriptionText));
-
-    });
-    
-    document.querySelectorAll('.right-home__wp._results .right-home__element').forEach(el => {
         const topDiv = el.querySelector('.right-home__top');
         if (!topDiv) return;
-        
+
         if (!el.dataset.originalDescription) {
-            el.dataset.originalDescription = topDiv.textContent;
+
+            const span = topDiv.querySelector('span');
+            const text = topDiv.cloneNode(true);
+            if (span) text.removeChild(span);
+            el.dataset.originalDescription = text.textContent.trim();
+        }
+
+        const lineSpan = topDiv.querySelector('span');
+        const descriptionText = parseEventDescription(el.dataset.originalDescription, currentLanguage);
+
+
+        topDiv.innerHTML = '';
+        if (lineSpan) topDiv.appendChild(lineSpan);
+        topDiv.appendChild(document.createTextNode(' ' + descriptionText));
+    });
+    
+
+    document.querySelectorAll('.right-home__wp._results .right-home__element').forEach(el => {
+        const topDiv = el.querySelector('.right-home__top');
+        const topTextDiv = el.querySelector('.right-home__top-text');
+        
+        if (!topDiv) return;
+
+        if (!el.dataset.originalDescription && topTextDiv) {
+            el.dataset.originalDescription = topTextDiv.textContent;
         }
         
-        topDiv.textContent = parseEventDescription(el.dataset.originalDescription, currentLanguage);
+
+        if (topTextDiv) {
+            topTextDiv.textContent = parseEventDescription(el.dataset.originalDescription, currentLanguage);
+        }
     });
 }
 
